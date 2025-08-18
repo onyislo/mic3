@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Theme variables */
+@layer base {
+  /* Dark Theme (default) */
+  :root,
+  .dark-theme {
+    --color-bg-dark: #1C1C1C; /* Charcoal/Dark Gray */
+    --color-bg-dark-light: #2a2a2a; /* Slightly lighter than base dark */
+    --color-text-light: #FFFFFF; /* White */
+    --color-text-muted: #BBBBBB; /* Light gray for muted text */
+    --color-primary: #E6A15D; /* Copper/Orange-Gold */
+    --color-primary-dark: #C88A46; /* Darker copper for hover states */
+    --color-secondary: #FFFFFF; /* White */
+    --color-tertiary: #F2F2F2; /* Light Gray for accents/highlights */
+    --color-accent: #F2F2F2; /* Light Gray for accents/highlights */
+    
+    /* Additional colors */
+    --color-success: #28a745;
+    --color-warning: #ffc107;
+    --color-error: #dc3545;
+    --color-info: #17a2b8;
+    
+    /* Border and shadow colors */
+    --color-border-light: rgba(255, 255, 255, 0.1);
+    --color-shadow: rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Light Theme */
+  .light-theme {
+    --color-bg-dark: #FFFFFF; /* White */
+    --color-bg-dark-light: #F2F2F2; /* Light Gray */
+    --color-text-light: #1C1C1C; /* Charcoal/Dark Gray */
+    --color-text-muted: #6c757d; /* Medium gray for muted text */
+    --color-primary: #E6A15D; /* Copper/Orange-Gold */
+    --color-primary-dark: #C88A46; /* Darker copper for hover states */
+    --color-secondary: #1C1C1C; /* Charcoal/Dark Gray */
+    --color-tertiary: #F2F2F2; /* Light Gray for accents/highlights */
+    --color-accent: #F2F2F2; /* Light Gray for accents/highlights */
+    
+    /* Additional colors */
+    --color-success: #198754;
+    --color-warning: #ffc107;
+    --color-error: #dc3545;
+    --color-info: #0dcaf0;
+    
+    /* Border and shadow colors */
+    --color-border-light: rgba(0, 0, 0, 0.1);
+    --color-shadow: rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Apply theme transition for smooth theme changes */
+body {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.theme-transition {
+  transition: background-color 0.3s ease, 
+              border-color 0.3s ease, 
+              color 0.3s ease,
+              box-shadow 0.3s ease;
+}
