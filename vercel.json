@@ -2,6 +2,18 @@
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],
+  "routes": [
+    { "src": "/admin/(.*)", "dest": "/index.html" },
+    { "src": "/courses/(.*)", "dest": "/index.html" },
+    { "src": "/login", "dest": "/index.html" },
+    { "src": "/register", "dest": "/index.html" },
+    { "src": "/dashboard", "dest": "/index.html" },
+    { "src": "/contact", "dest": "/index.html" },
+    { "src": "/portfolio", "dest": "/index.html" },
+    { "src": "/auth/(.*)", "dest": "/index.html" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ],
   "env": {
     "VITE_SUPABASE_URL": "https://hucxgczibzdqpaiuvwrf.supabase.co",
     "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1Y3hnY3ppYnpkcXBhaXV2d3JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MTQ1NTQsImV4cCI6MjA3MTE5MDU1NH0.fJSyNAF7peA1mvcZyTJkDgljzmQSgiegVADBEOjkUlc"
