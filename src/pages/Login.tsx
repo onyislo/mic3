@@ -152,8 +152,7 @@ export const Login: React.FC = () => {
             
             <button
               type="button"
-              onClick={() => alert('Google login will be integrated with backend')}
-              className="w-full flex items-center justify-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-800 font-medium hover:bg-gray-50 focus:outline-none transition-colors"
+              className="w-full flex items-center justify-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-800 font-medium hover:bg-gray-50 focus:outline-none transition-colors disabled:opacity-70"
             >
               <GoogleIcon />
               <span className="ml-2">Sign in with Google</span>

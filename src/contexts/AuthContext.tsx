@@ -11,7 +11,8 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<any>;
+  register: (name: string, email: string, password: string) => Promise<{success: boolean; message?: string}>;
+  googleAuth: () => Promise<void>;
   logout: () => void;
   loading: boolean;
   isAuthenticated: boolean;
@@ -98,11 +99,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUser(null);
   };
 
+  const googleAuth = async () => {
+    // This is a placeholder for future Google authentication integration
+    console.log('Google authentication not implemented yet.');
+    
+    // This will be replaced with actual Google auth implementation
+    throw new Error('Google authentication not implemented yet.');
+  };
+
   const value = {
     user,
     token,
     login,
     register,
+    googleAuth,
     logout,
     loading,
     isAuthenticated: !!token && !!user,
