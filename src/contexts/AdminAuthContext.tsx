@@ -40,7 +40,29 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   const login = async (email: string, password: string) => {
     try {
-      // API authentication
+      // Check for mock credentials first
+      if (email === "dev@mic3solutiongroup.com" && password === "12345678") {
+        // Mock admin user data
+        const mockAdminData: AdminUser = {
+          id: "admin-1",
+          email: "dev@mic3solutiongroup.com",
+          name: "MIC3 Developer",
+          role: "super_admin"
+        };
+        
+        const mockToken = "mock-admin-token-" + Date.now();
+        
+        localStorage.setItem(ADMIN_TOKEN_KEY, mockToken);
+        localStorage.setItem(ADMIN_USER_KEY, JSON.stringify(mockAdminData));
+        
+        setToken(mockToken);
+        setAdmin(mockAdminData);
+        
+        console.log("Dev admin login successful");
+        return;
+      }
+      
+      // If not mock credentials, proceed with API authentication
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/auth/login`, {
         method: 'POST',
         headers: {

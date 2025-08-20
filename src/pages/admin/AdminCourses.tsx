@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Eye, Users } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { Plus, Edit, Trash2, Eye, Users, Video, FileText } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 interface Course {
   id: string;
@@ -15,6 +15,7 @@ interface Course {
 
 export const AdminCourses: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   
   const [courses, setCourses] = useState<Course[]>([
     {
@@ -232,15 +233,23 @@ export const AdminCourses: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
-                      <button className="text-blue-600 hover:text-blue-900">
+                      <button 
+                        onClick={() => navigate(`/admin/courses/${course.id}/content`)}
+                        className="bg-red-100 hover:bg-red-200 text-red-800 px-2 py-1 rounded text-xs"
+                        title="Manage course content"
+                      >
+                        Content
+                      </button>
+                      <button className="text-blue-600 hover:text-blue-900" title="Preview course">
                         <Eye className="h-4 w-4" />
                       </button>
-                      <button className="text-yellow-600 hover:text-yellow-900">
+                      <button className="text-yellow-600 hover:text-yellow-900" title="Edit course details">
                         <Edit className="h-4 w-4" />
                       </button>
                       <button 
                         onClick={() => handleDeleteCourse(course.id)}
                         className="text-red-600 hover:text-red-900"
+                        title="Delete course"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>

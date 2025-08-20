@@ -1,22 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
-import { Play, BookOpen, CheckCircle, Lock, Award, AlertCircle } from 'lucide-react';
-import { api } from '../services/api';
+import { Play, FileText, BookOpen, CheckCircle, Download, ExternalLink, Lock } from 'lucide-react';
+import { api } from '../services';
 import { useAuth } from '../contexts/AuthContext';
 
-interface Lesson {
+interface ContentItem {
   id: string;
   title: string;
-  duration: string;
+  type: 'video' | 'pdf' | 'text';
+  url?: string;
+  duration?: number;
+  fileSize?: number;
   isCompleted: boolean;
-  videoUrl?: string;
-  content: string;
+  order: number;
+}
+
+interface CourseSection {
+  id: string;
+  title: string;
+  items: ContentItem[];
+  order: number;
 }
 
 interface CourseContent {
   id: string;
   title: string;
-  lessons: Lesson[];
+  sections: CourseSection[];
   progress: number;
 }
 
@@ -25,8 +34,8 @@ export const CourseContent: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const [content, setContent] = useState<CourseContent | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [currentSection, setCurrentSection] = useState<number>(0);
+  const [currentItem, setCurrentItem] = useState<number>(0);
   const [showBadgeModal, setShowBadgeModal] = useState(false);
   const [completedBadge, setCompletedBadge] = useState<{
     name: string;
@@ -35,48 +44,95 @@ export const CourseContent: React.FC = () => {
   } | null>(null);
 
   // Mock course content
-  const mockContent: CourseContent = {
+  const mockContent = useMemo<CourseContent>(() => ({
     id: '1',
     title: 'React Masterclass',
     progress: 35,
-    lessons: [
+    sections: [
       {
         id: '1',
-        title: 'Introduction to React',
-        duration: '15 min',
-        isCompleted: true,
-        content: 'Welcome to the React Masterclass! In this lesson, we\'ll cover what React is, why it\'s popular, and what you\'ll learn throughout this course.',
+        title: 'Introduction',
+        order: 0,
+        items: [
+          {
+            id: '101',
+            title: 'Welcome to the Course',
+            type: 'video',
+            url: 'https://example.com/videos/welcome.mp4',
+            duration: 360, // 6 minutes in seconds
+            isCompleted: true,
+            order: 0
+          },
+          {
+            id: '102',
+            title: 'Course Resources',
+            type: 'pdf',
+            url: 'https://example.com/pdfs/resources.pdf',
+            fileSize: 2500000, // 2.5MB
+            isCompleted: false,
+            order: 1
+          }
+        ]
       },
       {
         id: '2',
-        title: 'Setting up Development Environment',
-        duration: '20 min',
-        isCompleted: true,
-        content: 'Learn how to set up your development environment with Node.js, npm, and create-react-app.',
+        title: 'Getting Started with React',
+        order: 1,
+        items: [
+          {
+            id: '201',
+            title: 'Setting Up Your Environment',
+            type: 'video',
+            url: 'https://example.com/videos/setup.mp4',
+            duration: 720, // 12 minutes in seconds
+            isCompleted: false,
+            order: 0
+          },
+          {
+            id: '202',
+            title: 'Creating Your First React App',
+            type: 'video',
+            url: 'https://example.com/videos/first-app.mp4',
+            duration: 900, // 15 minutes in seconds
+            isCompleted: false,
+            order: 1
+          },
+          {
+            id: '203',
+            title: 'React Fundamentals Guide',
+            type: 'pdf',
+            url: 'https://example.com/pdfs/react-guide.pdf',
+            fileSize: 3500000, // 3.5MB
+            isCompleted: false,
+            order: 2
+          }
+        ]
       },
       {
         id: '3',
-        title: 'JSX and Components',
-        duration: '25 min',
-        isCompleted: false,
-        content: 'Understand JSX syntax and how to create your first React components.',
-      },
-      {
-        id: '4',
-        title: 'Props and State',
-        duration: '30 min',
-        isCompleted: false,
-        content: 'Learn about props for component communication and state for managing component data.',
-      },
-      {
-        id: '5',
-        title: 'Event Handling',
-        duration: '18 min',
-        isCompleted: false,
-        content: 'Master event handling in React components and understand synthetic events.',
-      },
-    ],
-  };
+        title: 'Advanced React Concepts',
+        order: 2,
+        items: [
+          {
+            id: '301',
+            title: 'Hooks and State Management',
+            type: 'video',
+            url: 'https://example.com/videos/hooks.mp4',
+            duration: 1500, // 25 minutes in seconds
+            isCompleted: false,
+            order: 0
+          },
+          {
+            id: '302',
+            title: 'Context API and Redux',
+            type: 'text',
+            isCompleted: false,
+            order: 1
+          }
+        ]
+      }
+    ]
+  }), []);
 
   useEffect(() => {
     const fetchCourseContent = async () => {
@@ -85,10 +141,12 @@ export const CourseContent: React.FC = () => {
           // Extract course ID from slug or use slug directly
           const courseId = '1'; // In real app, you'd get this from course data
           const data = await api.getCourseContent(courseId);
-          setContent(data);
+          // Type assertion since we know the structure of the returned data
+          setContent(data as CourseContent);
         }
-      } catch (err) {
+      } catch (error) {
         // Fall back to mock data
+        console.error("Failed to fetch course content:", error);
         setContent(mockContent);
       } finally {
         setLoading(false);
@@ -96,7 +154,7 @@ export const CourseContent: React.FC = () => {
     };
 
     fetchCourseContent();
-  }, [slug]);
+  }, [slug, mockContent]);
 
   // Check if user has purchased this course
   const hasPurchased = user?.purchasedCourses?.includes(content?.id || '');
@@ -141,36 +199,75 @@ export const CourseContent: React.FC = () => {
     );
   }
 
-  const selectedLesson = currentLesson || content.lessons[0];
+  // Get currently selected section and item
+  const getCurrentContent = () => {
+    if (!content || content.sections.length === 0) return null;
+    
+    const section = content.sections[currentSection];
+    if (!section || section.items.length === 0) return null;
+    
+    return {
+      section,
+      item: section.items[currentItem] || section.items[0]
+    };
+  };
+
+  const currentContent = getCurrentContent();
+  
+  // Calculate total items and completed items
+  const getTotalProgress = () => {
+    if (!content) return { total: 0, completed: 0 };
+    
+    let total = 0;
+    let completed = 0;
+    
+    content.sections.forEach(section => {
+      section.items.forEach(item => {
+        total++;
+        if (item.isCompleted) completed++;
+      });
+    });
+    
+    return { total, completed };
+  };
 
   const handleMarkAsComplete = async () => {
-    if (!content || !selectedLesson) return;
+    if (!content || !currentContent) return;
     
     try {
-      // Create a copy of the lessons array
-      const updatedLessons = content.lessons.map(lesson => {
-        if (lesson.id === selectedLesson.id) {
-          return { ...lesson, isCompleted: true };
+      const { section, item } = currentContent;
+      
+      // Create a copy of the sections array
+      const updatedSections = content.sections.map(s => {
+        if (s.id === section.id) {
+          return {
+            ...s,
+            items: s.items.map(i => {
+              if (i.id === item.id) {
+                return { ...i, isCompleted: true };
+              }
+              return i;
+            })
+          };
         }
-        return lesson;
+        return s;
       });
       
       // Calculate the new progress percentage
-      const completedLessons = updatedLessons.filter(l => l.isCompleted).length;
-      const totalLessons = updatedLessons.length;
-      const newProgress = Math.round((completedLessons / totalLessons) * 100);
+      const { total, completed } = getTotalProgress();
+      const newProgress = total > 0 ? Math.round(((completed + 1) / total) * 100) : 0;
       
       // Update the local state
       setContent({
         ...content,
-        lessons: updatedLessons,
+        sections: updatedSections,
         progress: newProgress
       });
 
       // Send the update to the API
       await api.updateLessonProgress({
         courseId: content.id,
-        lessonId: selectedLesson.id,
+        lessonId: item.id,
         completed: true
       });
 
@@ -178,29 +275,68 @@ export const CourseContent: React.FC = () => {
       if (newProgress === 100) {
         await api.markCourseComplete(content.id);
         
-        // Show badge completion modal
-        setCompletedBadge({
+        // Show completion alert
+        alert(`🎉 Congratulations on completing the ${content.title} course!`);
+        
+        // Initialize badge data (if we have a badge system)
+        const badgeData = {
           name: `${content.title} Master`,
           image: 'https://img.icons8.com/color/96/000000/prize.png',
           description: `Congratulations on completing the ${content.title} course!`
-        });
-        setShowBadgeModal(true);
+        };
+        
+        // If we have badge modals set up
+        if (typeof setCompletedBadge === 'function' && typeof setShowBadgeModal === 'function') {
+          setCompletedBadge(badgeData);
+          setShowBadgeModal(true);
+        }
       }
 
-      // Move to the next lesson if not the last one
-      const currentIndex = content.lessons.findIndex(l => l.id === selectedLesson.id);
-      if (currentIndex < content.lessons.length - 1) {
-        setCurrentLesson(content.lessons[currentIndex + 1]);
-      }
+      // Navigate to next content if available
+      navigateToNextContent();
     } catch (error) {
-      console.error('Error updating lesson progress:', error);
+      console.error('Error updating content progress:', error);
     }
   };
+  
+  // Navigation functions
+  const navigateToPreviousContent = () => {
+    if (!content) return;
+    
+    if (currentItem > 0) {
+      // Move to previous item in current section
+      setCurrentItem(currentItem - 1);
+    } else if (currentSection > 0) {
+      // Move to last item of previous section
+      setCurrentSection(currentSection - 1);
+      const prevSection = content.sections[currentSection - 1];
+      setCurrentItem(prevSection.items.length - 1);
+    }
+  };
+  
+  const navigateToNextContent = () => {
+    if (!content) return;
+    
+    const section = content.sections[currentSection];
+    if (currentItem < section.items.length - 1) {
+      // Move to next item in current section
+      setCurrentItem(currentItem + 1);
+    } else if (currentSection < content.sections.length - 1) {
+      // Move to first item of next section
+      setCurrentSection(currentSection + 1);
+      setCurrentItem(0);
+    }
+  };
+  
+  const isFirstContent = currentSection === 0 && currentItem === 0;
+  const isLastContent = content && 
+    currentSection === content.sections.length - 1 && 
+    currentItem === content.sections[currentSection]?.items.length - 1;
 
   return (
     <div className="min-h-screen bg-bg-dark text-text-light">
       <div className="flex flex-col md:flex-row">
-        {/* Sidebar - Lessons List */}
+        {/* Sidebar - Course Content List */}
         <div className="w-full md:w-80 bg-bg-dark-light border-r border-primary/20 md:h-screen overflow-y-auto">
           <div className="p-6">
             <h2 className="text-xl font-bold mb-4">{content.title}</h2>
@@ -222,103 +358,187 @@ export const CourseContent: React.FC = () => {
             </div>
           </div>
 
-          <div className="space-y-2 px-4 pb-4 md:pb-0">
-            {content.lessons.map((lesson, index) => (
-              <button
-                key={lesson.id}
-                onClick={() => setCurrentLesson(lesson)}
-                className={`w-full text-left p-4 rounded-lg transition-colors ${
-                  selectedLesson.id === lesson.id
-                    ? 'bg-primary/20 border-l-4 border-primary'
-                    : 'hover:bg-bg-dark/50'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-text-muted">Lesson {index + 1}</span>
-                  {lesson.isCompleted ? (
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                  ) : (
-                    <Play className="h-4 w-4 text-text-muted" />
-                  )}
+          {/* Course Sections and Items */}
+          <div className="pb-4 md:pb-0">
+            {content.sections.map((section, sectionIndex) => (
+              <div key={section.id} className="mb-4">
+                <div className="px-6 py-3 bg-bg-dark/30">
+                  <h3 className="font-semibold text-text-light">{section.title}</h3>
                 </div>
-                <h3 className="font-medium mb-1">{lesson.title}</h3>
-                <span className="text-sm text-text-muted">{lesson.duration}</span>
-              </button>
+                <div className="space-y-1 mt-2">
+                  {section.items.map((item, itemIndex) => (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setCurrentSection(sectionIndex);
+                        setCurrentItem(itemIndex);
+                      }}
+                      className={`w-full text-left px-6 py-3 transition-colors ${
+                        currentSection === sectionIndex && currentItem === itemIndex
+                          ? 'bg-primary/20 border-l-4 border-primary'
+                          : 'hover:bg-bg-dark/50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center">
+                          {item.type === 'video' && <Play className="h-4 w-4 text-primary mr-2" />}
+                          {item.type === 'pdf' && <FileText className="h-4 w-4 text-blue-400 mr-2" />}
+                          {item.type === 'text' && <BookOpen className="h-4 w-4 text-green-400 mr-2" />}
+                          <span className="text-sm">{item.title}</span>
+                        </div>
+                        {item.isCompleted ? (
+                          <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                        ) : (
+                          <div className="w-4 h-4"></div> 
+                        )}
+                      </div>
+                      <div className="flex text-xs text-text-muted pl-6">
+                        {item.type === 'video' && item.duration && (
+                          <span>{Math.floor(item.duration / 60)} min</span>
+                        )}
+                        {item.type === 'pdf' && item.fileSize && (
+                          <span>{(item.fileSize / 1048576).toFixed(1)} MB</span>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </div>
 
         {/* Main Content Area */}
         <div className="flex-1 p-4 md:p-8">
-          <div className="max-w-4xl mx-auto">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold mb-2">{selectedLesson.title}</h1>
-              <div className="flex items-center text-text-muted">
-                <BookOpen className="h-5 w-5 mr-2" />
-                <span>{selectedLesson.duration}</span>
+          {currentContent ? (
+            <div className="max-w-4xl mx-auto">
+              <div className="mb-8">
+                <h1 className="text-3xl font-bold mb-2">{currentContent.item.title}</h1>
+                <div className="flex items-center text-text-muted">
+                  {currentContent.item.type === 'video' && (
+                    <>
+                      <Play className="h-5 w-5 mr-2" />
+                      <span>
+                        {currentContent.item.duration 
+                          ? `${Math.floor(currentContent.item.duration / 60)}:${String(currentContent.item.duration % 60).padStart(2, '0')} minutes` 
+                          : 'Video'}
+                      </span>
+                    </>
+                  )}
+                  {currentContent.item.type === 'pdf' && (
+                    <>
+                      <FileText className="h-5 w-5 mr-2" />
+                      <span>
+                        {currentContent.item.fileSize 
+                          ? `PDF (${(currentContent.item.fileSize / 1048576).toFixed(2)} MB)` 
+                          : 'PDF Document'}
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* Video Player Placeholder */}
-            <div className="bg-bg-dark-light rounded-lg mb-8 aspect-video flex items-center justify-center">
-              <div className="text-center">
-                <Play className="h-16 w-16 text-primary mx-auto mb-4" />
-                <p className="text-text-muted">Video Player</p>
-                <p className="text-sm text-text-muted mt-2">
-                  In a real application, this would be a video player component
-                </p>
-              </div>
-            </div>
+              {/* Content Display Area */}
+              {currentContent.item.type === 'video' && (
+                <div className="bg-bg-dark-light rounded-lg mb-8 aspect-video flex items-center justify-center">
+                  {currentContent.item.url ? (
+                    <video 
+                      controls 
+                      className="w-full h-full rounded-lg"
+                      src={currentContent.item.url}
+                      poster="/video-thumbnail.jpg"
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  ) : (
+                    <div className="text-center">
+                      <Play className="h-16 w-16 text-primary mx-auto mb-4" />
+                      <p className="text-text-muted">Video Player</p>
+                      <p className="text-sm text-text-muted mt-2">
+                        This is a placeholder for the video player
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
 
-            {/* Lesson Content */}
-            <div className="prose prose-invert max-w-none">
-              <div className="bg-bg-dark-light p-6 rounded-lg">
-                <h3 className="text-xl font-semibold mb-4">Lesson Notes</h3>
-                <p className="text-text-muted leading-relaxed">{selectedLesson.content}</p>
-              </div>
-            </div>
+              {currentContent.item.type === 'pdf' && (
+                <div className="bg-bg-dark-light rounded-lg mb-8 p-8 flex flex-col items-center justify-center">
+                  <FileText className="h-16 w-16 text-blue-400 mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">PDF Document</h3>
+                  <p className="text-text-muted mb-4">
+                    {currentContent.item.title}
+                    {currentContent.item.fileSize && ` (${(currentContent.item.fileSize / 1048576).toFixed(2)} MB)`}
+                  </p>
+                  <div className="flex gap-4">
+                    <a
+                      href={currentContent.item.url || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center"
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      View PDF
+                    </a>
+                    <a
+                      href={currentContent.item.url || '#'}
+                      download
+                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </a>
+                  </div>
+                </div>
+              )}
 
-            {/* Navigation */}
-            <div className="flex flex-wrap gap-4 justify-between mt-8">
-              <button
-                onClick={() => {
-                  const currentIndex = content.lessons.findIndex(l => l.id === selectedLesson.id);
-                  if (currentIndex > 0) {
-                    setCurrentLesson(content.lessons[currentIndex - 1]);
-                  }
-                }}
-                disabled={content.lessons.findIndex(l => l.id === selectedLesson.id) === 0}
-                className="bg-bg-dark-light hover:bg-primary/20 text-text-light px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous Lesson
-              </button>
+              {currentContent.item.type === 'text' && (
+                <div className="prose prose-invert max-w-none">
+                  <div className="bg-bg-dark-light p-6 rounded-lg">
+                    <h3 className="text-xl font-semibold mb-4">Text Content</h3>
+                    <p className="text-text-muted leading-relaxed">
+                      This is a text content item. In a real application, this would contain detailed text content.
+                    </p>
+                  </div>
+                </div>
+              )}
 
-              <div className="flex gap-4">
-                {!selectedLesson.isCompleted && (
-                  <button
-                    onClick={handleMarkAsComplete}
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors flex items-center"
-                  >
-                    <CheckCircle className="h-5 w-5 mr-2" />
-                    Mark as Complete
-                  </button>
-                )}
-
+              {/* Navigation */}
+              <div className="flex flex-wrap gap-4 justify-between mt-8">
                 <button
-                  onClick={() => {
-                    const currentIndex = content.lessons.findIndex(l => l.id === selectedLesson.id);
-                    if (currentIndex < content.lessons.length - 1) {
-                      setCurrentLesson(content.lessons[currentIndex + 1]);
-                    }
-                  }}
-                  disabled={content.lessons.findIndex(l => l.id === selectedLesson.id) === content.lessons.length - 1}
-                  className="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={navigateToPreviousContent}
+                  disabled={isFirstContent}
+                  className="bg-bg-dark-light hover:bg-primary/20 text-text-light px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Next Lesson
+                  Previous Content
                 </button>
+
+                <div className="flex gap-4">
+                  {!currentContent.item.isCompleted && (
+                    <button
+                      onClick={handleMarkAsComplete}
+                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors flex items-center"
+                    >
+                      <CheckCircle className="h-5 w-5 mr-2" />
+                      Mark as Complete
+                    </button>
+                  )}
+
+                  <button
+                    onClick={navigateToNextContent}
+                    disabled={isLastContent}
+                    className="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next Content
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-text-muted">Select a content item from the sidebar to begin learning.</p>
+            </div>
+          )}
         </div>
       </div>
 

@@ -19,6 +19,7 @@ import { Portfolio } from './pages/Portfolio';
 import { AdminLogin } from './pages/admin/AdminLogin';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminCourses } from './pages/admin/AdminCourses';
+import { CourseContentManager } from './pages/admin/CourseContentManager';
 import { AdminUsers } from './pages/admin/AdminUsers';
 import { AdminPayments } from './pages/admin/AdminPayments';
 import { AdminPortfolio } from './pages/admin/AdminPortfolio';
@@ -60,6 +61,11 @@ function App() {
             <Route path="/admin/courses" element={
               <AdminProtectedRoute>
                 <AdminLayout><AdminCourses /></AdminLayout>
+              </AdminProtectedRoute>
+            } />
+            <Route path="/admin/courses/:courseId/content" element={
+              <AdminProtectedRoute>
+                <AdminLayout><CourseContentManager /></AdminLayout>
               </AdminProtectedRoute>
             } />
             <Route path="/admin/users" element={
