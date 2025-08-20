@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, Shield } from 'lucide-react';
+import { Mail, Lock, Shield, Info } from 'lucide-react';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 
 export const AdminLogin: React.FC = () => {
@@ -8,8 +8,20 @@ export const AdminLogin: React.FC = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { login } = useAdminAuth();
+  const [envInfo, setEnvInfo] = useState('');
+  const { login, authError } = useAdminAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Show environment info for debugging
+    const isProduction = window.location.hostname.includes('vercel.app') || 
+                      !window.location.hostname.includes('localhost');
+    setEnvInfo(`Environment: ${isProduction ? 'Production' : 'Development'}`);
+    
+    if (authError) {
+      setError(authError);
+    }
+  }, [authError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,8 +31,9 @@ export const AdminLogin: React.FC = () => {
     try {
       await login(email, password);
       navigate('/admin/dashboard', { replace: true });
-    } catch (err) {
-      setError('Invalid admin credentials');
+    } catch (error) {
+      console.error('Login error:', error);
+      setError(error instanceof Error ? error.message : 'Invalid admin credentials');
     } finally {
       setLoading(false);
     }
@@ -39,6 +52,11 @@ export const AdminLogin: React.FC = () => {
           <p className="mt-2 text-center text-sm text-red-200">
             MIC3 Solution Group - Administrative Access
           </p>
+          {envInfo && (
+            <p className="mt-1 text-center text-xs text-red-300/70">
+              {envInfo}
+            </p>
+          )}
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>

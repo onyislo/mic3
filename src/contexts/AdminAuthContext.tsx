@@ -15,6 +15,7 @@ interface AdminAuthContextType {
   logout: () => void;
   loading: boolean;
   isAuthenticated: boolean;
+  authError: string | null;
 }
 
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
@@ -26,47 +27,83 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [admin, setAdmin] = useState<AdminUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     // Check for active Supabase session on mount
     const initializeAdminAuth = async () => {
       setLoading(true);
+      setAuthError(null);
 
-      // Get current session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        // Check if user is an admin in the admins table
-        const { data: adminData } = await supabase
-          .from('admins')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .single();
+      try {
+        console.log('Initializing admin auth...');
+        
+        // Check if we're in a Vercel production environment
+        const isProduction = window.location.hostname.includes('vercel.app') || 
+                           !window.location.hostname.includes('localhost');
+        console.log('Environment:', isProduction ? 'Production' : 'Development');
 
-        if (adminData) {
-          const adminUserData: AdminUser = {
-            id: session.user.id,
-            email: session.user.email || '',
-            name: adminData.name || session.user.email?.split('@')[0] || '',
-            role: adminData.role || 'admin'
-          };
-
-          setToken(session.access_token);
-          setAdmin(adminUserData);
-
-          // Save to localStorage as fallback
-          localStorage.setItem(ADMIN_TOKEN_KEY, session.access_token);
-          localStorage.setItem(ADMIN_USER_KEY, JSON.stringify(adminUserData));
+        // Get current session
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          setAuthError('Failed to get session: ' + sessionError.message);
+          setLoading(false);
+          return;
         }
-      } else {
-        // Check for stored values as fallback
-        const storedToken = localStorage.getItem(ADMIN_TOKEN_KEY);
-        const storedAdmin = localStorage.getItem(ADMIN_USER_KEY);
+        
+        const session = sessionData.session;
+        
+        if (session) {
+          console.log('Active session found');
+          
+          // Check if user is an admin in the admins table
+          const { data: adminData, error: adminError } = await supabase
+            .from('admins')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .single();
 
-        if (storedToken && storedAdmin) {
-          setToken(storedToken);
-          setAdmin(JSON.parse(storedAdmin));
+          if (adminError) {
+            console.error('Admin check error:', adminError);
+            setAuthError('Not authorized as admin');
+          }
+
+          if (adminData) {
+            console.log('Admin data found:', adminData);
+            const adminUserData: AdminUser = {
+              id: session.user.id,
+              email: session.user.email || '',
+              name: adminData.name || session.user.email?.split('@')[0] || '',
+              role: adminData.role || 'admin'
+            };
+
+            setToken(session.access_token);
+            setAdmin(adminUserData);
+
+            // Save to localStorage as fallback
+            localStorage.setItem(ADMIN_TOKEN_KEY, session.access_token);
+            localStorage.setItem(ADMIN_USER_KEY, JSON.stringify(adminUserData));
+            console.log('Admin auth completed successfully');
+          }
+        } else {
+          console.log('No active session, checking localStorage');
+          // Check for stored values as fallback
+          const storedToken = localStorage.getItem(ADMIN_TOKEN_KEY);
+          const storedAdmin = localStorage.getItem(ADMIN_USER_KEY);
+
+          if (storedToken && storedAdmin) {
+            console.log('Found stored admin credentials');
+            setToken(storedToken);
+            setAdmin(JSON.parse(storedAdmin));
+          } else {
+            console.log('No stored credentials found');
+          }
         }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        setAuthError(error instanceof Error ? error.message : 'Unknown auth error');
       }
 
       setLoading(false);
@@ -74,6 +111,7 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     // Set up auth state listener
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event);
       if (event === 'SIGNED_IN' && session) {
         // This will be handled by the initialization above
         initializeAdminAuth();
@@ -82,6 +120,7 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
         setAdmin(null);
         localStorage.removeItem(ADMIN_TOKEN_KEY);
         localStorage.removeItem(ADMIN_USER_KEY);
+        console.log('Admin signed out');
       }
     });
 
@@ -179,6 +218,7 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
     logout,
     loading,
     isAuthenticated: !!token && !!admin,
+    authError
   };
 
   return <AdminAuthContext.Provider value={value}>{children}</AdminAuthContext.Provider>;

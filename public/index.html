@@ -5,13 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MIC3 Solution Group</title>
   <script type="module">
-    // This is a fallback redirect script for SPA routing
-    window.location.href = "/";
+    // This is a fallback script for SPA routing
+    // Instead of redirecting, we'll let the main app handle routing
+    const mainAppUrl = "/";
+    if (!window.location.pathname.startsWith(mainAppUrl)) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   </script>
 </head>
 <body>
   <noscript>
-    <strong>Redirecting to homepage. If you are not redirected, please enable JavaScript or <a href="/">click here</a>.</strong>
+    <strong>JavaScript is required to use this application. Please enable JavaScript or <a href="/">go to homepage</a>.</strong>
   </noscript>
 </body>
 </html>
