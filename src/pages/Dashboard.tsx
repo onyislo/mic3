@@ -2,7 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, User, Award, Clock, Play, TrendingUp, Search, ChevronRight, Medal, Gift, Zap, Gift as GiftIcon, Bookmark, Bell, Star, Tag, FileText, UserCheck } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { api } from '../services/api';
+import { 
+  getUserCourseProgress, 
+  getUserBadges, 
+  getUserPayments, 
+  getCourses, 
+  getCourseById 
+} from '../services/supabaseService';
+import { Course, CourseProgress, Badge, UserBadge } from '../services/supabaseClient';
 
 interface Course {
   id: string;

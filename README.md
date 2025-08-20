@@ -10,6 +10,8 @@ This is the frontend application for MIC3 Solutions Group, built with React, Typ
 - Course browsing and registration
 - Portfolio showcase
 - Contact form
+- Course progress tracking and badge system
+- User enrollment and payment management
 
 ## Technology Stack
 
@@ -17,6 +19,7 @@ This is the frontend application for MIC3 Solutions Group, built with React, Typ
 - Tailwind CSS for styling
 - React Router for navigation
 - Context API for state management
+- Supabase for backend (authentication, database, and storage)
 
 ## Getting Started
 
@@ -38,7 +41,14 @@ This is the frontend application for MIC3 Solutions Group, built with React, Typ
    npm install
    ```
 
-3. Start the development server:
+3. Set up environment variables:
+   - Copy `.env.example` to `.env`
+   - Fill in your Supabase URL and anon key
+
+4. Set up Supabase:
+   - Follow the instructions in [SUPABASE_SETUP.md](./SUPABASE_SETUP.md)
+
+5. Start the development server:
    ```
    npm run dev
    ```

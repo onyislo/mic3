@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { supabase } from '../services/supabaseClient';
 
 interface AdminUser {
   id: string;
@@ -27,20 +28,74 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load admin auth state from localStorage on mount
-    const storedToken = localStorage.getItem(ADMIN_TOKEN_KEY);
-    const storedAdmin = localStorage.getItem(ADMIN_USER_KEY);
+    // Check for active Supabase session on mount
+    const initializeAdminAuth = async () => {
+      setLoading(true);
 
-    if (storedToken && storedAdmin) {
-      setToken(storedToken);
-      setAdmin(JSON.parse(storedAdmin));
-    }
-    setLoading(false);
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        // Check if user is an admin in the admins table
+        const { data: adminData } = await supabase
+          .from('admins')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single();
+
+        if (adminData) {
+          const adminUserData: AdminUser = {
+            id: session.user.id,
+            email: session.user.email || '',
+            name: adminData.name || session.user.email?.split('@')[0] || '',
+            role: adminData.role || 'admin'
+          };
+
+          setToken(session.access_token);
+          setAdmin(adminUserData);
+
+          // Save to localStorage as fallback
+          localStorage.setItem(ADMIN_TOKEN_KEY, session.access_token);
+          localStorage.setItem(ADMIN_USER_KEY, JSON.stringify(adminUserData));
+        }
+      } else {
+        // Check for stored values as fallback
+        const storedToken = localStorage.getItem(ADMIN_TOKEN_KEY);
+        const storedAdmin = localStorage.getItem(ADMIN_USER_KEY);
+
+        if (storedToken && storedAdmin) {
+          setToken(storedToken);
+          setAdmin(JSON.parse(storedAdmin));
+        }
+      }
+
+      setLoading(false);
+    };
+
+    // Set up auth state listener
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        // This will be handled by the initialization above
+        initializeAdminAuth();
+      } else if (event === 'SIGNED_OUT') {
+        setToken(null);
+        setAdmin(null);
+        localStorage.removeItem(ADMIN_TOKEN_KEY);
+        localStorage.removeItem(ADMIN_USER_KEY);
+      }
+    });
+
+    initializeAdminAuth();
+
+    // Cleanup subscription
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
-      // Check for mock credentials first
+      // Check for mock credentials first for development
       if (email === "dev@mic3solutiongroup.com" && password === "12345678") {
         // Mock admin user data
         const mockAdminData: AdminUser = {
@@ -62,37 +117,59 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
         return;
       }
       
-      // If not mock credentials, proceed with API authentication
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
+      // Regular authentication through Supabase
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
       });
 
-      if (!response.ok) {
-        throw new Error('Admin login failed');
+      if (error) {
+        throw error;
       }
 
-      const data = await response.json();
-      const { token: authToken, admin: adminData } = data;
+      if (data.user && data.session) {
+        // Check if user is an admin in the admins table
+        const { data: adminData, error: adminError } = await supabase
+          .from('admins')
+          .select('*')
+          .eq('user_id', data.user.id)
+          .single();
 
-      localStorage.setItem(ADMIN_TOKEN_KEY, authToken);
-      localStorage.setItem(ADMIN_USER_KEY, JSON.stringify(adminData));
-      
-      setToken(authToken);
-      setAdmin(adminData);
+        if (adminError || !adminData) {
+          throw new Error('Not authorized as admin');
+        }
+
+        const adminUserData: AdminUser = {
+          id: data.user.id,
+          email: data.user.email || '',
+          name: adminData.name || data.user.email?.split('@')[0] || '',
+          role: adminData.role || 'admin'
+        };
+
+        setToken(data.session.access_token);
+        setAdmin(adminUserData);
+
+        // Save to localStorage as fallback
+        localStorage.setItem(ADMIN_TOKEN_KEY, data.session.access_token);
+        localStorage.setItem(ADMIN_USER_KEY, JSON.stringify(adminUserData));
+      }
     } catch (error) {
       throw error;
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem(ADMIN_TOKEN_KEY);
-    localStorage.removeItem(ADMIN_USER_KEY);
-    setToken(null);
-    setAdmin(null);
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      // Auth state listener will handle clearing the state
+    } catch (error) {
+      console.error('Error signing out:', error);
+      // Fallback to local clearing if API call fails
+      localStorage.removeItem(ADMIN_TOKEN_KEY);
+      localStorage.removeItem(ADMIN_USER_KEY);
+      setToken(null);
+      setAdmin(null);
+    }
   };
 
   const value = {
