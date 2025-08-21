@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { BookOpen, User, LogOut, Menu, X, Sun, Moon } from 'lucide-react';
+import { User, LogOut, Menu, X, Sun, Moon } from 'lucide-react';
 import { useState } from 'react';
 
 export const Navbar: React.FC = () => {
@@ -22,6 +22,7 @@ export const Navbar: React.FC = () => {
   const navLinks = [
     { path: '/', label: 'Home' },
     { path: '/courses', label: 'Courses' },
+    { path: '/about', label: 'About Us' },
     { path: '/contact', label: 'Contact' },
   ];
 
@@ -131,14 +132,47 @@ export const Navbar: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile Navigation */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden py-4 space-y-2">
+        {/* Mobile Navigation - Side Menu Overlay */}
+        <div 
+          className={`fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity duration-300 ${
+            isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+        
+        {/* Side Menu Panel */}
+        <div 
+          className={`fixed top-0 right-0 h-full w-3/4 max-w-xs bg-bg-dark-light z-50 md:hidden shadow-xl transform transition-transform duration-300 ease-in-out ${
+            isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
+        >
+          {/* Close button */}
+          <div className="flex justify-end p-4">
+            <button
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="text-text-muted hover:text-primary"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+
+          {/* Mobile branding */}
+          <div className="flex items-center space-x-2 px-6 pb-6 border-b border-primary/10">
+            <img 
+              src="/IMG-20250814-WA0003.jpg" 
+              alt="MIC3 Solution Group Logo" 
+              className="h-10 w-10 object-contain rounded-full"
+            />
+            <span className="text-lg font-bold text-text-light">MIC3 Solutions</span>
+          </div>
+          
+          {/* Navigation links */}
+          <div className="px-4 py-6 space-y-1 overflow-y-auto max-h-[calc(100vh-180px)]">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
-                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                className={`flex items-center px-4 py-3 rounded-md text-base font-medium transition-colors ${
                   isActive(link.path)
                     ? 'text-primary bg-primary/10'
                     : 'text-text-muted hover:text-text-light hover:bg-bg-dark'
@@ -150,7 +184,7 @@ export const Navbar: React.FC = () => {
             ))}
             <Link
               to="/portfolio"
-              className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+              className={`flex items-center px-4 py-3 rounded-md text-base font-medium transition-colors ${
                 isActive('/portfolio')
                   ? 'text-primary bg-primary/10'
                   : 'text-text-muted hover:text-text-light hover:bg-bg-dark'
@@ -163,35 +197,38 @@ export const Navbar: React.FC = () => {
             {/* Theme Toggle Button - Mobile */}
             <button
               onClick={toggleTheme}
-              className="flex items-center w-full px-3 py-2 rounded-md text-base font-medium text-text-muted hover:text-text-light hover:bg-bg-dark transition-colors"
+              className="flex items-center w-full px-4 py-3 rounded-md text-base font-medium text-text-muted hover:text-text-light hover:bg-bg-dark transition-colors"
             >
               {theme === 'dark' ? (
                 <>
                   <Sun className="h-5 w-5 mr-3" />
-                  Switch to Light Mode
+                  Light Mode
                 </>
               ) : (
                 <>
                   <Moon className="h-5 w-5 mr-3" />
-                  Switch to Dark Mode
+                  Dark Mode
                 </>
               )}
             </button>
 
+            <div className="border-t border-primary/10 my-2"></div>
+
             {isAuthenticated ? (
-              <div className="space-y-2">
+              <div className="space-y-1 pt-2">
                 <Link
                   to="/dashboard"
-                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  className={`flex items-center px-4 py-3 rounded-md text-base font-medium transition-colors ${
                     isActive('/dashboard')
                       ? 'text-primary bg-primary/10'
                       : 'text-text-muted hover:text-text-light hover:bg-bg-dark'
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
+                  <User className="h-5 w-5 mr-3" />
                   Dashboard
                 </Link>
-                <div className="px-3 py-2 text-text-muted text-sm">
+                <div className="px-4 py-2 text-text-muted text-sm">
                   Logged in as {user?.name}
                 </div>
                 <button
@@ -199,23 +236,24 @@ export const Navbar: React.FC = () => {
                     handleLogout();
                     setIsMobileMenuOpen(false);
                   }}
-                  className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-text-muted hover:text-text-light transition-colors"
+                  className="flex w-full items-center px-4 py-3 rounded-md text-base font-medium text-text-muted hover:text-text-light hover:bg-bg-dark transition-colors"
                 >
+                  <LogOut className="h-5 w-5 mr-3" />
                   Logout
                 </button>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3 pt-2">
                 <Link
                   to="/login"
-                  className="block px-3 py-2 rounded-md text-base font-medium text-text-muted hover:text-text-light transition-colors"
+                  className="flex items-center px-4 py-3 rounded-md text-base font-medium text-text-muted hover:text-text-light hover:bg-bg-dark transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Login
                 </Link>
                 <Link
                   to="/register"
-                  className="block px-3 py-2 rounded-md text-base font-medium bg-primary hover:bg-primary-dark text-white transition-colors"
+                  className="flex items-center justify-center px-4 py-3 rounded-md text-base font-medium bg-primary hover:bg-primary-dark text-white transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Register
@@ -223,7 +261,7 @@ export const Navbar: React.FC = () => {
               </div>
             )}
           </div>
-        )}
+        </div>
       </div>
     </nav>
   );

@@ -17,6 +17,7 @@ import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
 import { Contact } from './pages/Contact';
 import { Portfolio } from './pages/Portfolio';
+import About from './pages/About';
 import AuthCallback from './pages/auth/Callback';
 import { AdminLogin } from './pages/admin/AdminLogin';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
@@ -37,6 +38,7 @@ function App() {
             {/* Public Routes */}
             <Route path="/" element={<Layout><Home /></Layout>} />
             <Route path="/portfolio" element={<Layout><Portfolio /></Layout>} />
+            <Route path="/about" element={<Layout><About /></Layout>} />
             <Route path="/courses" element={<Layout><Courses /></Layout>} />
             <Route path="/courses/:slug" element={<Layout><CourseDetail /></Layout>} />
             <Route path="/courses/:slug/content" element={

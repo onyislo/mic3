@@ -1,40 +1,54 @@
-import React, { useState } from 'react';
-import { Plus, Edit, Trash2, Star } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Edit, Trash2, Star, Loader2 } from 'lucide-react';
+import { 
+  getPortfolioItems, 
+  addPortfolioItem, 
+  deletePortfolioItem, 
+  togglePortfolioItemFeatured, 
+  PortfolioItem 
+} from '../../services/portfolioService';
 
-interface PortfolioItem {
+// Extended type that includes proper display properties 
+// to ensure we have proper type safety
+interface ExtendedPortfolioItem extends PortfolioItem {
+  // Make id required instead of optional for this component
   id: string;
-  title: string;
-  category: string;
-  description: string;
-  image: string;
-  technologies: string[];
-  featured: boolean;
-  createdAt: string;
+  // Add display date field
+  displayDate: string;
 }
 
 export const AdminPortfolio: React.FC = () => {
-  const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([
-    {
-      id: '1',
-      title: 'Research Grant Proposal',
-      category: 'Grant Writing',
-      description: 'Secured $500K research funding for university climate change study',
-      image: 'https://images.pexels.com/photos/159844/cellular-education-classroom-159844.jpeg?auto=compress&cs=tinysrgb&w=400',
-      technologies: ['Research Analysis', 'Budget Planning', 'Compliance Review'],
-      featured: true,
-      createdAt: '2024-01-15',
-    },
-    {
-      id: '2',
-      title: 'AI Customer Service Bot',
-      category: 'Service Automation',
-      description: 'Automated customer service system reducing response time by 80%',
-      image: 'https://images.pexels.com/photos/8386440/pexels-photo-8386440.jpeg?auto=compress&cs=tinysrgb&w=400',
-      technologies: ['Python', 'OpenAI API', 'Natural Language Processing'],
-      featured: false,
-      createdAt: '2024-01-10',
-    },
-  ]);
+  const [portfolioItems, setPortfolioItems] = useState<ExtendedPortfolioItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // Fetch portfolio items on component mount
+  useEffect(() => {
+    const fetchPortfolioItems = async () => {
+      try {
+        setLoading(true);
+        const items = await getPortfolioItems();
+        // Convert to ExtendedPortfolioItem with required fields
+        const formattedItems: ExtendedPortfolioItem[] = items
+          .filter(item => item.id !== undefined) // Filter out items without IDs
+          .map(item => ({
+            ...item,
+            id: item.id as string, // Type assertion since we filtered undefined
+            // Use current date if created_at doesn't exist
+            displayDate: new Date().toISOString().split('T')[0]
+          }));
+        setPortfolioItems(formattedItems);
+        setError('');
+      } catch (err) {
+        console.error('Error fetching portfolio items:', err);
+        setError('Failed to load portfolio items. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPortfolioItems();
+  }, []);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [newItem, setNewItem] = useState({
@@ -47,33 +61,83 @@ export const AdminPortfolio: React.FC = () => {
 
   const categories = ['Grant Writing', 'Proofreading & Editing', 'Service Automation', 'Web Development'];
 
-  const handleAddItem = (e: React.FormEvent) => {
+  const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    const item: PortfolioItem = {
-      id: Date.now().toString(),
-      title: newItem.title,
-      category: newItem.category,
-      description: newItem.description,
-      image: newItem.image,
-      technologies: newItem.technologies.split(',').map(tech => tech.trim()),
-      featured: false,
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-    setPortfolioItems([...portfolioItems, item]);
-    setNewItem({ title: '', category: '', description: '', image: '', technologies: '' });
-    setShowAddForm(false);
-  };
-
-  const handleDeleteItem = (id: string) => {
-    if (confirm('Are you sure you want to delete this portfolio item?')) {
-      setPortfolioItems(portfolioItems.filter(item => item.id !== id));
+    try {
+      const newPortfolioItem = {
+        title: newItem.title,
+        category: newItem.category,
+        description: newItem.description,
+        image: newItem.image,
+        technologies: newItem.technologies.split(',').map(tech => tech.trim()),
+        featured: false,
+      };
+      
+        const addedItem = await addPortfolioItem(newPortfolioItem);
+      
+      if (addedItem && addedItem.id) {
+        // Add the new item to the state with proper formatting
+        const newExtendedItem: ExtendedPortfolioItem = {
+          ...addedItem,
+          id: addedItem.id,
+          displayDate: new Date().toISOString().split('T')[0]
+        };        setPortfolioItems([newExtendedItem, ...portfolioItems]);
+        
+        // Reset the form
+        setNewItem({ title: '', category: '', description: '', image: '', technologies: '' });
+        setShowAddForm(false);
+      } else {
+        throw new Error('Failed to add portfolio item - missing ID');
+      }
+    } catch (err) {
+      console.error('Error adding portfolio item:', err);
+      alert('Failed to add portfolio item. Please try again.');
     }
   };
 
-  const toggleFeatured = (id: string) => {
-    setPortfolioItems(portfolioItems.map(item =>
-      item.id === id ? { ...item, featured: !item.featured } : item
-    ));
+  const handleDeleteItem = async (id: string) => {
+    if (!id) return;
+    
+    if (confirm('Are you sure you want to delete this portfolio item?')) {
+      try {
+        const success = await deletePortfolioItem(id);
+        
+        if (success) {
+          // Remove the deleted item from the state
+          setPortfolioItems(portfolioItems.filter(item => item.id !== id));
+        } else {
+          alert('Failed to delete portfolio item. Please try again.');
+        }
+      } catch (err) {
+        console.error('Error deleting portfolio item:', err);
+        alert('Failed to delete portfolio item. Please try again.');
+      }
+    }
+  };
+
+  const toggleFeatured = async (id: string) => {
+    if (!id) return;
+    
+    try {
+      const item = portfolioItems.find(item => item.id === id);
+      
+      if (!item) return;
+      
+      const newFeaturedStatus = !item.featured;
+      const success = await togglePortfolioItemFeatured(id, newFeaturedStatus);
+      
+      if (success) {
+        // Update the item in the state
+        setPortfolioItems(portfolioItems.map(item =>
+          item.id === id ? { ...item, featured: newFeaturedStatus } : item
+        ));
+      } else {
+        alert('Failed to update portfolio item. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error toggling featured status:', err);
+      alert('Failed to update portfolio item. Please try again.');
+    }
   };
 
   return (
@@ -91,6 +155,21 @@ export const AdminPortfolio: React.FC = () => {
           Add Portfolio Item
         </button>
       </div>
+
+      {/* Loading State */}
+      {loading && (
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="h-8 w-8 text-red-600 animate-spin" />
+          <span className="ml-2 text-red-600">Loading portfolio items...</span>
+        </div>
+      )}
+      
+      {/* Error State */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          {error}
+        </div>
+      )}
 
       {/* Add Portfolio Form */}
       {showAddForm && (
@@ -175,17 +254,23 @@ export const AdminPortfolio: React.FC = () => {
       )}
 
       {/* Portfolio Grid */}
+      {!loading && portfolioItems.length === 0 && (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+          <p className="text-gray-500">No portfolio items found. Add your first item to get started!</p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {portfolioItems.map((item) => (
           <div key={item.id} className="bg-white rounded-lg shadow-sm border border-red-100 overflow-hidden">
             <img
-              src={item.image}
-              alt={item.title}
+              src={item["Image URL"]}
+              alt={item["Project Title"]}
               className="w-full h-48 object-cover"
             />
             <div className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-red-600 font-medium">{item.category}</span>
+                <span className="text-sm text-red-600 font-medium">{item["Category"]}</span>
                 <button
                   onClick={() => toggleFeatured(item.id)}
                   className={`${item.featured ? 'text-yellow-500' : 'text-gray-400'} hover:text-yellow-500`}
@@ -194,22 +279,22 @@ export const AdminPortfolio: React.FC = () => {
                   <Star className="h-4 w-4" fill={item.featured ? 'currentColor' : 'none'} />
                 </button>
               </div>
-              <h3 className="text-lg font-semibold text-red-900 mb-2">{item.title}</h3>
-              <p className="text-red-600 text-sm mb-4">{item.description}</p>
+              <h3 className="text-lg font-semibold text-red-900 mb-2">{item["Project Title"]}</h3>
+              <p className="text-red-600 text-sm mb-4">{item["Description"]}</p>
               
               <div className="flex flex-wrap gap-1 mb-4">
-                {item.technologies.map((tech, index) => (
+                {item["Technologies (comma-separated)"]?.split(',').map((tech: string, index: number) => (
                   <span
                     key={index}
                     className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full"
                   >
-                    {tech}
+                    {tech.trim()}
                   </span>
                 ))}
               </div>
               
               <div className="flex justify-between items-center">
-                <span className="text-xs text-red-500">{item.createdAt}</span>
+                <span className="text-xs text-red-500">{item.displayDate}</span>
                 <div className="flex space-x-2">
                   <button className="text-yellow-600 hover:text-yellow-800">
                     <Edit className="h-4 w-4" />

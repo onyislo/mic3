@@ -1,5 +1,5 @@
-import React from 'react';
-import { Code, Database, Shield, ArrowRight, ExternalLink, BookOpen, Award, Users } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Code, Database, Shield, ArrowRight, ExternalLink, BookOpen, Award, Users, Loader } from 'lucide-react';
 
 export const Portfolio: React.FC = () => {
   const services = [
@@ -41,7 +41,19 @@ export const Portfolio: React.FC = () => {
     },
   ];
 
-  const portfolioProjects = [
+  // Define a local type that matches what we need in the UI
+  interface PortfolioProject {
+    title: string;
+    category: string;
+    description: string;
+    image: string;
+    technologies: string[];
+    link?: string; // Optional link
+    featured?: boolean; // Optional featured flag
+  }
+  
+  const [portfolioProjects, setPortfolioProjects] = useState<PortfolioProject[]>([
+    // Fallback portfolio items that will be used until the real data loads
     {
       title: 'Research Grant Proposal',
       category: 'Grant Writing',
@@ -58,39 +70,45 @@ export const Portfolio: React.FC = () => {
       technologies: ['Python', 'OpenAI API', 'Natural Language Processing', 'Integration APIs'],
       link: '#',
     },
-    {
-      title: 'Academic Thesis Editing',
-      category: 'Proofreading & Editing',
-      description: 'Comprehensive editing of 200+ page doctoral thesis in environmental science with publication preparation.',
-      image: 'https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg?auto=compress&cs=tinysrgb&w=600',
-      technologies: ['Academic Writing', 'Citation Management', 'Style Guide Compliance', 'Publication Standards'],
-      link: '#',
-    },
-    {
-      title: 'Learning Management System',
-      category: 'Web Development',
-      description: 'Custom LMS platform with course management, progress tracking, and M-Pesa payment integration.',
-      image: 'https://images.pexels.com/photos/3184298/pexels-photo-3184298.jpeg?auto=compress&cs=tinysrgb&w=600',
-      technologies: ['React', 'Node.js', 'MongoDB', 'M-Pesa API'],
-      link: '#',
-    },
-    {
-      title: 'Non-Profit Funding Success',
-      category: 'Grant Writing',
-      description: 'Secured multiple grants totaling $1.2M for education non-profit organization over 18 months.',
-      image: 'https://images.pexels.com/photos/6646918/pexels-photo-6646918.jpeg?auto=compress&cs=tinysrgb&w=600',
-      technologies: ['Grant Research', 'Proposal Writing', 'Budget Development', 'Impact Assessment'],
-      link: '#',
-    },
-    {
-      title: 'Business Process Automation',
-      category: 'Service Automation',
-      description: 'Automated invoice processing and client communication system saving 20 hours per week.',
-      image: 'https://images.pexels.com/photos/590016/pexels-photo-590016.jpeg?auto=compress&cs=tinysrgb&w=600',
-      technologies: ['Python', 'Zapier', 'Email Automation', 'Document Processing'],
-      link: '#',
-    },
-  ];
+  ]);
+  
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Import the portfolio service and load data from Supabase
+  useEffect(() => {
+    import('../services/portfolioService')
+      .then(({ getFeaturedPortfolioItems }) => {
+        // Try to fetch items from Supabase
+        getFeaturedPortfolioItems()
+          .then(items => {
+            if (items && items.length > 0) {
+              // Convert the Supabase items to our UI format
+              const uiProjects: PortfolioProject[] = items.map(item => ({
+                title: item["Project Title"],
+                category: item["Category"],
+                description: item["Description"],
+                image: item["Image URL"],
+                technologies: item["Technologies (comma-separated)"]?.split(',').map((t: string) => t.trim()) || [],
+                featured: item.featured,
+                link: '#' // Add a default link
+              }));
+              
+              // If we have items in Supabase, use them
+              setPortfolioProjects(uiProjects);
+            }
+          })
+          .catch(err => {
+            console.error("Error fetching portfolio items:", err);
+          })
+          .finally(() => {
+            setIsLoading(false);
+          });
+      })
+      .catch(err => {
+        console.error("Error importing portfolio service:", err);
+        setIsLoading(false);
+      });
+  }, []);
 
   const testimonials = [
     {
@@ -119,12 +137,12 @@ export const Portfolio: React.FC = () => {
   return (
     <div className="bg-bg-dark text-text-light">
       {/* Hero Section */}
-      <section className="py-20 px-4">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
+      <section className="py-12 px-4">
+        <div className="max-w-7xl mx-auto text-center -mt-4">
+          <h1 className="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
             Our Portfolio
           </h1>
-          <p className="text-xl text-text-muted mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-text-muted mb-6 max-w-3xl mx-auto">
             Discover the innovative solutions we've crafted for businesses across various industries. 
             From web applications to mobile apps, we deliver excellence in every project.
           </p>
@@ -132,10 +150,10 @@ export const Portfolio: React.FC = () => {
       </section>
 
       {/* Services Section */}
-      <section className="py-20 px-4 bg-bg-dark-light">
+      <section className="py-16 px-4 bg-bg-dark-light">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Our Services</h2>
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-3">Our Services</h2>
             <p className="text-xl text-text-muted max-w-2xl mx-auto">
               We provide comprehensive digital solutions to help your business thrive in the modern world.
             </p>
@@ -165,14 +183,22 @@ export const Portfolio: React.FC = () => {
       </section>
 
       {/* Portfolio Projects */}
-      <section className="py-20 px-4">
+      <section className="py-16 px-4">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Featured Projects</h2>
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-3">Featured Projects</h2>
             <p className="text-xl text-text-muted max-w-2xl mx-auto">
               Take a look at some of our recent work and success stories.
             </p>
           </div>
+          
+          {/* Loading state */}
+          {isLoading && (
+            <div className="flex justify-center items-center py-12">
+              <Loader className="h-10 w-10 text-primary animate-spin" />
+              <span className="ml-3 text-lg text-primary">Loading portfolio projects...</span>
+            </div>
+          )}
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {portfolioProjects.map((project, index) => (
@@ -215,10 +241,10 @@ export const Portfolio: React.FC = () => {
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 px-4 bg-bg-dark-light">
+      <section className="py-16 px-4 bg-bg-dark border-t border-b border-primary/10">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">What Our Clients Say</h2>
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-3">What Our Clients Say</h2>
             <p className="text-xl text-text-muted max-w-2xl mx-auto">
               Don't just take our word for it. Here's what our satisfied clients have to say about our work.
             </p>
@@ -248,10 +274,10 @@ export const Portfolio: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4">
+      <section className="py-16 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-6">Ready to Start Your Project?</h2>
-          <p className="text-xl text-text-muted mb-8">
+          <h2 className="text-4xl font-bold mb-4">Ready to Start Your Project?</h2>
+          <p className="text-xl text-text-muted mb-6">
             Let's discuss how we can help bring your vision to life with our expertise and innovative solutions.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

@@ -47,7 +47,7 @@ export const Home: React.FC = () => {
   return (
     <div className="bg-bg-dark text-text-light">
       {/* Hero Section with Logo Background */}
-      <section className="relative py-32 px-4 overflow-hidden">
+      <section className="relative py-20 px-4 overflow-hidden">
         {/* Logo Background - Semi-transparent and patterned */}
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-bg-dark opacity-90"></div>
@@ -58,8 +58,8 @@ export const Home: React.FC = () => {
           }}></div>
         </div>
         
-        {/* Large centered logo */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-5 z-0">
+        {/* Large centered logo - moved up */}
+        <div className="absolute top-[40%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-5 z-0">
           <img 
             src="/IMG-20250814-WA0003.jpg" 
             alt="MIC3 Solutions Group" 
@@ -70,20 +70,20 @@ export const Home: React.FC = () => {
         {/* Animated subtle gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-bg-dark/5 z-0"></div>
         
-        <div className="max-w-7xl mx-auto text-center relative z-10">
-          {/* Small visible logo at top */}
-          <div className="flex justify-center mb-8">
+        <div className="max-w-7xl mx-auto text-center relative z-10 -mt-8">
+          {/* Small visible logo at top - moved up */}
+          <div className="flex justify-center mb-6">
             <img 
               src="/IMG-20250814-WA0003.jpg" 
               alt="MIC3 Solutions Group" 
-              className="w-24 h-24 object-contain rounded-full border-4 border-primary"
+              className="w-28 h-28 object-contain rounded-full border-4 border-primary"
             />
           </div>
           
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
+          <h1 className="text-5xl md:text-6xl font-bold mb-5 bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
             Innovate. Create. Transform.
           </h1>
-          <p className="text-xl text-text-muted mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-text-muted mb-6 max-w-2xl mx-auto">
             MIC3 Solution Group delivers cutting-edge digital solutions that transform businesses.
             From web development to grant writing and automation services, we bring your vision to life.
             We also offer comprehensive courses for companies and individuals to learn these valuable skills.

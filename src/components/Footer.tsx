@@ -40,26 +40,26 @@ export const Footer: React.FC = () => {
   ];
 
   return (
-    <footer className="bg-bg-dark-light text-text-light pt-16 pb-8">
+    <footer className="bg-bg-dark-light text-text-light pt-8 pb-4">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           {/* Company Info */}
           <div>
-            <h3 className="text-2xl font-bold mb-6">MIC3 Solutions Group</h3>
-            <p className="text-text-muted mb-6">
-              Empowering individuals and businesses through innovative technology solutions and comprehensive learning experiences.
+            <h3 className="text-lg font-bold mb-3">MIC3 Solutions Group</h3>
+            <p className="text-text-muted text-sm mb-3">
+              Empowering individuals and businesses through innovative technology solutions.
             </p>
-            <div className="flex space-x-3">
-              {socialLinks.map((social, index) => (
+            <div className="flex space-x-2">
+              {socialLinks.slice(0, 4).map((social, index) => (
                 <a
                   key={index}
                   href={social.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-2 bg-bg-dark rounded-full hover:bg-primary/20 transition-colors"
+                  className="p-1.5 bg-bg-dark rounded-full hover:bg-primary/20 transition-colors"
                   aria-label={social.label}
                 >
-                  <social.icon className="h-5 w-5 text-primary" />
+                  <social.icon className="h-4 w-4 text-primary" />
                 </a>
               ))}
             </div>
@@ -67,8 +67,8 @@ export const Footer: React.FC = () => {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-xl font-bold mb-6">Quick Links</h3>
-            <ul className="space-y-3">
+            <h3 className="text-lg font-bold mb-3">Quick Links</h3>
+            <ul className="grid grid-cols-2 gap-x-2 gap-y-1.5 text-sm">
               {quickLinks.map((link, index) => (
                 <li key={index}>
                   <Link
@@ -84,9 +84,9 @@ export const Footer: React.FC = () => {
 
           {/* Course Categories */}
           <div>
-            <h3 className="text-xl font-bold mb-6">Course Categories</h3>
-            <ul className="space-y-3">
-              {courseCategories.map((category, index) => (
+            <h3 className="text-lg font-bold mb-3">Course Categories</h3>
+            <ul className="grid grid-cols-1 gap-y-1.5 text-sm">
+              {courseCategories.slice(0, 4).map((category, index) => (
                 <li key={index}>
                   <Link
                     to={category.path}
@@ -101,25 +101,24 @@ export const Footer: React.FC = () => {
 
           {/* Contact Info */}
           <div>
-            <h3 className="text-xl font-bold mb-6">Contact Us</h3>
-            <ul className="space-y-4">
+            <h3 className="text-lg font-bold mb-3">Contact Us</h3>
+            <ul className="space-y-1.5 text-sm">
               {contactInfo.map((item, index) => (
                 <li key={index} className="flex items-start">
-                  <item.icon className="h-5 w-5 text-primary mr-3 mt-1" />
+                  <item.icon className="h-4 w-4 text-primary mr-2" />
                   <span className="text-text-muted">{item.text}</span>
                 </li>
               ))}
             </ul>
             
-            <div className="mt-6">
-              <h4 className="text-lg font-semibold mb-4">Subscribe to Our Newsletter</h4>
+            <div className="mt-3">
               <div className="flex">
                 <input
                   type="email"
                   placeholder="Enter your email"
-                  className="p-2 px-3 bg-bg-dark border border-primary/20 rounded-l-lg flex-grow text-text-light focus:outline-none focus:border-primary"
+                  className="p-1.5 px-2 text-xs bg-bg-dark border border-primary/20 rounded-l-lg flex-grow text-text-light focus:outline-none focus:border-primary"
                 />
-                <button className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-r-lg transition-colors">
+                <button className="bg-primary hover:bg-primary-dark text-white px-3 py-1.5 text-xs rounded-r-lg transition-colors">
                   Subscribe
                 </button>
               </div>
@@ -127,22 +126,22 @@ export const Footer: React.FC = () => {
           </div>
         </div>
 
-        <div className="pt-8 mt-8 border-t border-primary/20">
+        <div className="pt-4 mt-4 border-t border-primary/20">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-4 md:mb-0">
-              <p className="text-text-muted">
+            <div className="mb-2 md:mb-0">
+              <p className="text-text-muted text-xs">
                 &copy; {currentYear} MIC3 Solutions Group. All rights reserved.
               </p>
             </div>
-            <div className="flex space-x-6">
-              <Link to="/privacy-policy" className="text-text-muted hover:text-primary transition-colors text-sm">
-                Privacy Policy
+            <div className="flex space-x-4 text-xs">
+              <Link to="/privacy-policy" className="text-text-muted hover:text-primary transition-colors">
+                Privacy
               </Link>
-              <Link to="/terms-of-service" className="text-text-muted hover:text-primary transition-colors text-sm">
-                Terms of Service
+              <Link to="/terms-of-service" className="text-text-muted hover:text-primary transition-colors">
+                Terms
               </Link>
-              <Link to="/cookie-policy" className="text-text-muted hover:text-primary transition-colors text-sm">
-                Cookie Policy
+              <Link to="/cookie-policy" className="text-text-muted hover:text-primary transition-colors">
+                Cookies
               </Link>
             </div>
           </div>
