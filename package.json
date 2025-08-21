@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node deploy.js && vite build --outDir dist",
+    "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },

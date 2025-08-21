@@ -1,39 +1,78 @@
 # Vercel Deployment Guide
 
+This guide will help you properly deploy your React application with Supabase integration to Vercel.
+
+## Fix for "Invalid API Key" Error
+
+**The "Invalid API Key" error occurs because your Supabase credentials are not properly set in your Vercel deployment.** This is why you can't see data added in one browser when viewing the site in another browser.
+
 ## Required Environment Variables
 
-To deploy this application on Vercel, you **must** set the following environment variables in your Vercel project settings:
+You must configure these environment variables in the Vercel dashboard:
 
-- `VITE_SUPABASE_URL` - Your Supabase project URL
-- `VITE_SUPABASE_ANON_KEY` - Your Supabase anonymous/public key
+1. Go to your project in the Vercel dashboard
+2. Navigate to "Settings" > "Environment Variables"
+3. Add the following environment variables:
 
-## Setting Up Environment Variables in Vercel
+| Name | Value | Description |
+|------|-------|-------------|
+| `VITE_SUPABASE_URL` | `https://hucxgczibzdqpaiuvwrf.supabase.co` | Your Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1Y3hnY3ppYnpkcXBhaXV2d3JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MTQ1NTQsImV4cCI6MjA3MTE5MDU1NH0.fJSyNAF7peA1mvcZyTJkDgljzmQSgiegVADBEOjkUlc` | Your Supabase anonymous key |
 
-1. Go to your Vercel dashboard
-2. Select your project
-3. Click on the "Settings" tab
-4. Select "Environment Variables" from the left sidebar
-5. Add the required variables mentioned above
-6. Make sure to add these variables to the "Production", "Preview", and "Development" environments
-7. Click "Save" to apply the changes
-8. Redeploy your application
+⚠️ **Note**: Do not hardcode these values in `vercel.json` or any source files. Always use the Vercel dashboard for security reasons.
 
-## Deployment Troubleshooting
+## Vercel Configuration
 
-If you encounter "Invalid API key" errors:
+The `vercel.json` file should only contain routing configurations:
 
-1. Check that your environment variables are correctly set in Vercel
-2. Make sure you're using the correct Supabase project URL and anon key
-3. Verify that your Supabase project is active and not in maintenance mode
-4. Try accessing the `/test-supabase.html` path on your deployed site to debug environment variables
-
-## Local Development
-
-For local development, create a `.env` file in your project root with the same variables:
-
+```json
+{
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/admin/(.*)", "dest": "/index.html", "status": 200 },
+    { "src": "/courses/(.*)", "dest": "/index.html", "status": 200 },
+    { "src": "/login", "dest": "/index.html", "status": 200 },
+    { "src": "/register", "dest": "/index.html", "status": 200 },
+    { "src": "/dashboard", "dest": "/index.html", "status": 200 },
+    { "src": "/contact", "dest": "/index.html", "status": 200 },
+    { "src": "/portfolio", "dest": "/index.html", "status": 200 },
+    { "src": "/auth/(.*)", "dest": "/index.html", "status": 200 },
+    { "src": "/(.*)", "dest": "/index.html", "status": 200 }
+  ]
+}
 ```
-VITE_SUPABASE_URL=https://your-project-id.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key-here
-```
 
-Do not commit this file to version control as it contains sensitive information.
+## Common Deployment Issues
+
+### 1. "Invalid API key" Error
+
+If you encounter an "Invalid API key" error when registering or logging in, it means that the Supabase environment variables are not properly set. Follow these steps:
+
+1. Check if the environment variables are correctly set in the Vercel dashboard
+2. Ensure you have removed any hardcoded environment variables from `vercel.json`
+3. Redeploy your application after making these changes
+
+### 2. "Missing public directory" Error
+
+If you encounter a "Missing public directory" error, make sure:
+
+1. Your build command is properly configured in Vercel
+2. The output directory is properly set (typically `dist` for Vite projects)
+3. Your `package.json` includes a proper build script
+
+Default build configuration for this Vite project:
+- Build Command: `npm run build`
+- Output Directory: `dist`
+
+### 3. Mixed Routing Properties Error
+
+If you see "Mixed routing properties" error, ensure you don't have both `rewrites` and `routes` in your `vercel.json`. Only use one of these properties (preferably `routes` for this project).
+
+## Troubleshooting
+
+If you still encounter deployment issues:
+
+1. Check the Vercel deployment logs for specific error messages
+2. Ensure all dependencies are properly installed
+3. Verify that the build process completes successfully
+4. Test your build locally with `npm run build`
