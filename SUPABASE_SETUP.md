@@ -2,7 +2,7 @@
 
 This guide explains how to set up your Supabase project for the MIC3 website.
 
-## Step 1: Create a Supabase Project
+## Step 1: Create a Supabase Projectits 
 
 1. Go to [Supabase](https://supabase.com/) and sign in or create an account
 2. Create a new project and note down your project URL and anon public key
