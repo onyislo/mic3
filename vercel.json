@@ -1,7 +1,4 @@
 {
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
   "routes": [
     { "handle": "filesystem" },
     { "src": "/admin/(.*)", "dest": "/index.html", "status": 200 },
@@ -13,9 +10,5 @@
     { "src": "/portfolio", "dest": "/index.html", "status": 200 },
     { "src": "/auth/(.*)", "dest": "/index.html", "status": 200 },
     { "src": "/(.*)", "dest": "/index.html", "status": 200 }
-  ],
-  "env": {
-    "VITE_SUPABASE_URL": "https://hucxgczibzdqpaiuvwrf.supabase.co",
-    "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1Y3hnY3ppYnpkcXBhaXV2d3JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MTQ1NTQsImV4cCI6MjA3MTE5MDU1NH0.fJSyNAF7peA1mvcZyTJkDgljzmQSgiegVADBEOjkUlc"
-  }
+  ]
 }
