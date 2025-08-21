@@ -133,6 +133,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const register = async (name: string, email: string, password: string) => {
     try {
+      // Debug info for troubleshooting
+      console.log('Registering user with Supabase...');
+      
+      // Check if Supabase client is properly initialized
+      if (!supabase.auth) {
+        console.error('Supabase auth client is not initialized properly');
+        return { 
+          success: false, 
+          message: "Authentication service is not available" 
+        };
+      }
+      
       // Sign up with Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -145,7 +157,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
       if (error) {
-        throw error;
+        console.error('Supabase signup error:', error);
+        
+        // Provide more specific error messages
+        if (error.message.includes('API key')) {
+          console.error('API Key issue detected. Check environment variables.');
+        }
+        
+        return {
+          success: false,
+          message: error.message || "Registration failed"
+        };
       }
 
       if (data.user) {
@@ -159,6 +181,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (profileError) {
           console.error('Error creating user profile:', profileError);
         }
+      } else {
+        console.warn('User data not returned from Supabase');
       }
 
       // Return success - user will need to verify email if email confirmation is enabled
@@ -168,7 +192,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       };
     } catch (error) {
       console.error('Registration error:', error);
-      throw error;
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "An unknown error occurred"
+      };
     }
   };
 
