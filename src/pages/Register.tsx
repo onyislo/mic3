@@ -36,34 +36,20 @@ export const Register: React.FC = () => {
     setLoading(true);
 
     try {
-      // Log the environment variables for debugging (without exposing full values)
-      if (typeof window !== 'undefined' && window.__env__) {
-        const keys = Object.keys(window.__env__);
-        console.log('Available environment variables:', keys);
-        
-        if (window.__env__['VITE_SUPABASE_URL']) {
-          const url = window.__env__['VITE_SUPABASE_URL'];
-          console.log('Using Supabase URL:', url.substring(0, 15) + '...');
-        }
-      }
-      
       const result = await register(name, email, password);
-      
+      // Only navigate and show verification message after successful registration
       if (result?.success) {
-        // Registration successful, navigate to login with verification message
+        // At this point, the backend would have sent a verification email
         navigate('/login', { 
           state: { 
             verificationEmail: true,
             email: email 
           } 
         });
-      } else {
-        // Registration failed with a specific message
-        setError(result?.message || 'Failed to create account. Please try again.');
       }
     } catch (error) {
       setError('Failed to create account. Please try again.');
-      console.error('Registration submission error:', error);
+      console.error(error);
     } finally {
       setLoading(false);
     }

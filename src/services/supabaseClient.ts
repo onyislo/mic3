@@ -1,55 +1,44 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Try to get environment variables from different sources
-// 1. Vite's import.meta.env (development)
-// 2. Window.__env__ (could be set in index.html for production)
-// 3. Hardcoded fallback values (last resort)
-
-// Function to get environment variables from all possible sources
-function getEnvVariable(key: string, fallback: string = ''): string {
-  // Check if we have Vite's import.meta.env
-  if (import.meta.env && import.meta.env[key]) {
+// Get environment variables - ONLY use import.meta.env (Vite will replace these at build time)
+const getEnvVar = (key: string): string => {
+  // Get from import.meta.env
+  if (import.meta.env[key]) {
+    // Don't log the actual values to prevent leaking them in logs
+    console.log(`Found ${key} in environment variables`);
     return import.meta.env[key];
   }
   
-  // Check if we have window.__env__ (can be set in index.html)
-  if (typeof window !== 'undefined' && 
-      window.__env__ && 
-      window.__env__[key]) {
-    return window.__env__[key];
-  }
+  // If not found, log an error
+  console.error(`Missing ${key} environment variable`);
+  console.error(`Please make sure ${key} is set in Vercel environment variables`);
   
-  // Last resort: hardcoded values - same as in vercel.json/env
-  const hardcodedValues: Record<string, string> = {
-    'VITE_SUPABASE_URL': 'https://hucxgczibzdqpaiuvwrf.supabase.co',
-    'VITE_SUPABASE_ANON_KEY': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1Y3hnY3ppYnpkcXBhaXV2d3JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MTQ1NTQsImV4cCI6MjA3MTE5MDU1NH0.fJSyNAF7peA1mvcZyTJkDgljzmQSgiegVADBEOjkUlc'
-  };
-  
-  if (hardcodedValues[key]) {
-    console.log(`Using hardcoded value for ${key}`);
-    return hardcodedValues[key];
-  }
-  
-  return fallback;
-}
+  return '';
+};
 
-// Get environment variables
-const supabaseUrl = getEnvVariable('VITE_SUPABASE_URL');
-const supabaseAnonKey = getEnvVariable('VITE_SUPABASE_ANON_KEY');
+const supabaseUrl = getEnvVar('VITE_SUPABASE_URL');
+const supabaseAnonKey = getEnvVar('VITE_SUPABASE_ANON_KEY');
 
-// Validate keys
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Missing Supabase environment variables');
+  console.error('Please check your Vercel project settings and make sure the required environment variables are set.');
+} else {
+  // Don't log actual values for security
+  console.log('Supabase environment variables found');
 }
 
-// Log for debugging (in development only)
-if (process.env.NODE_ENV !== 'production') {
-  console.log('Supabase URL:', supabaseUrl.substring(0, 20) + '...');
-  console.log('Supabase Key:', supabaseAnonKey.substring(0, 10) + '...');
+// Create the Supabase client
+let supabase;
+try {
+  supabase = createClient(supabaseUrl, supabaseAnonKey);
+  console.log('Supabase client created successfully');
+} catch (error) {
+  console.error('Failed to create Supabase client:', error);
+  throw new Error('Could not initialize Supabase client');
 }
 
-// Create Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Export the client
+export { supabase };
 
 export type UserProfile = {
   id: string;

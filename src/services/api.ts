@@ -1,12 +1,4 @@
-// Determine if we're in production
-const isProduction = window.location.hostname !== 'localhost' && 
-                     !window.location.hostname.includes('127.0.0.1');
-
-// In production, we'll use relative URLs which will be served from the same domain
-// In development, we can use the local API server
-const API_BASE_URL = isProduction 
-  ? '/api' // This will be relative to wherever the app is deployed
-  : (import.meta.env.VITE_API_URL || 'http://localhost:3000/api');
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 class ApiClient {
   private baseURL: string;
@@ -47,31 +39,13 @@ class ApiClient {
       },
     };
 
-    try {
-      const response = await fetch(url, config);
+    const response = await fetch(url, config);
 
-      if (!response.ok) {
-        if (isProduction) {
-          console.warn(`API Error: ${response.status} ${response.statusText} - Using fallback data`);
-          
-          // Import fallback handler dynamically to avoid circular dependencies
-          const { fallbackHandler } = await import('./fallbackHandler');
-          return fallbackHandler.handleRequest(url) as Promise<T>;
-        }
-        throw new Error(`API Error: ${response.status} ${response.statusText}`);
-      }
-
-      return response.json();
-    } catch (error: unknown) {
-      if (isProduction) {
-        console.warn(`API Connection Error: ${error instanceof Error ? error.message : 'Unknown'} - Using fallback data`);
-        
-        // Import fallback handler dynamically
-        const { fallbackHandler } = await import('./fallbackHandler');
-        return fallbackHandler.handleRequest(url) as Promise<T>;
-      }
-      throw error;
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
     }
+
+    return response.json();
   }
 
   async get<T>(endpoint: string): Promise<T> {
