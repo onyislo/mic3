@@ -135,7 +135,33 @@ class ApiClient {
     email: string;
     message: string;
   }) {
-    return this.post('/contact', data);
+    try {
+      // Try to post to the API endpoint
+      return await this.post('/contact', data);
+    } catch (error) {
+      console.log('Contact form submission - fallback mode:', {
+        ...data,
+        recipient: 'info@mic3solutiongroup.com',
+        timestamp: new Date().toISOString()
+      });
+      
+      // Save to localStorage for development purposes
+      const savedMessages = JSON.parse(localStorage.getItem('contactMessages') || '[]');
+      savedMessages.push({
+        ...data,
+        recipient: 'info@mic3solutiongroup.com',
+        timestamp: new Date().toISOString()
+      });
+      localStorage.setItem('contactMessages', JSON.stringify(savedMessages));
+      
+      // In development mode, we'll resolve anyway to simulate successful submission
+      if (import.meta.env.DEV) {
+        return { success: true, message: 'Message stored locally (development mode)' };
+      }
+      
+      // In production, we should properly handle the error
+      throw error;
+    }
   }
 }
 

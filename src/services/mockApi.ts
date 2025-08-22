@@ -507,5 +507,16 @@ export const mockApi = {
       });
     }
     return Promise.reject(new Error('Invalid credentials'));
+  },
+
+  // Contact form submission
+  submitContact: (data: { name: string; email: string; message: string }) => {
+    console.log('Contact form submission:', {
+      ...data,
+      recipientEmail: 'info@mic3solutiongroup.com',
+      timestamp: new Date().toISOString()
+    });
+    // In a real implementation, this would send an email to info@mic3solutiongroup.com
+    return Promise.resolve({ success: true, message: 'Thank you for your message! We will respond shortly.' });
   }
 };

@@ -25,11 +25,15 @@ export const Contact: React.FC = () => {
     setLoading(true);
 
     try {
+      // This will send the message to info@mic3solutiongroup.com
       await api.submitContact(formData);
+      
+      // Clear form and show success message
       setSuccess(true);
       setFormData({ name: '', email: '', message: '' });
-    } catch (err) {
-      setError('Failed to send message. Please try again.');
+    } catch (error) {
+      console.error('Contact form submission error:', error);
+      setError('Failed to send message. Please try again or reach out to us directly through our contact information.');
     } finally {
       setLoading(false);
     }
@@ -53,7 +57,7 @@ export const Contact: React.FC = () => {
             
             {success && (
               <div className="bg-green-500/10 border border-green-500/20 text-green-400 p-4 rounded-lg mb-6">
-                Thank you for your message! We'll get back to you soon.
+                Thank you for your message! We've received your inquiry and will get back to you soon.
               </div>
             )}
 
@@ -138,8 +142,8 @@ export const Contact: React.FC = () => {
                 <Mail className="h-6 w-6 text-primary mr-4 mt-1" />
                 <div>
                   <h3 className="font-semibold mb-1">Email</h3>
-                  <p className="text-text-muted">info@mic3solutions.co.ke</p>
-                  <p className="text-text-muted">projects@mic3solutions.co.ke</p>
+                  <a href="mailto:info@mic3solutiongroup.com" className="text-text-muted hover:text-primary transition-colors block">info@mic3solutiongroup.com</a>
+                  <a href="mailto:customercare@mic3solutiongroup.com" className="text-text-muted hover:text-primary transition-colors block">customercare@mic3solutiongroup.com</a>
                 </div>
               </div>
 
@@ -147,8 +151,8 @@ export const Contact: React.FC = () => {
                 <Phone className="h-6 w-6 text-primary mr-4 mt-1" />
                 <div>
                   <h3 className="font-semibold mb-1">Phone</h3>
-                  <p className="text-text-muted">+254 700 000 000</p>
-                  <p className="text-text-muted">+254 701 000 000</p>
+                  <a href="tel:+254712345678" className="text-text-muted hover:text-primary transition-colors block">+254 712 345 678</a>
+                  <a href="tel:+254700000000" className="text-text-muted hover:text-primary transition-colors block">+254 700 000 000</a>
                 </div>
               </div>
 
@@ -156,11 +160,14 @@ export const Contact: React.FC = () => {
                 <MapPin className="h-6 w-6 text-primary mr-4 mt-1" />
                 <div>
                   <h3 className="font-semibold mb-1">Office</h3>
-                  <p className="text-text-muted">
-                    Nairobi, Kenya<br />
-                    Westlands, ABC Place<br />
-                    4th Floor, Suite 403
-                  </p>
+                  <a 
+                    href="https://maps.google.com/?q=Karen,Nairobi,Kenya" 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-text-muted hover:text-primary transition-colors block"
+                  >
+                    Karen, Nairobi, Kenya<br />
+                  </a>
                 </div>
               </div>
             </div>

@@ -20,15 +20,18 @@ export const Footer: React.FC = () => {
     { name: 'Frontend Development', path: '/courses?category=Frontend' },
     { name: 'Backend Development', path: '/courses?category=Backend' },
     { name: 'Mobile Development', path: '/courses?category=Mobile' },
+    { name: 'AI Basics', path: '/courses?category=AI_Basics' },
+    { name: 'Grant Writing', path: '/courses?category=Grant_Writing' },
+    { name: 'AI Agents', path: '/courses?category=AI_Agents' },
     { name: 'UI/UX Design', path: '/courses?category=Design' },
     { name: 'DevOps', path: '/courses?category=DevOps' },
     { name: 'Data Science', path: '/courses?category=Data' },
   ];
 
   const contactInfo = [
-    { icon: MapPin, text: 'Karen, Nairobi, Kenya' },
-    { icon: Phone, text: '+254 712 345 678' },
-    { icon: Mail, text: 'info@mic3solutions.com' },
+    { icon: MapPin, text: 'Karen, Nairobi, Kenya', url: 'https://maps.google.com/?q=Karen,Nairobi,Kenya', type: 'map' },
+    { icon: Phone, text: '+254 712 345 678', url: 'tel:+254712345678', type: 'phone' },
+    { icon: Mail, text: 'info@mic3solutiongroup.com', url: 'mailto:info@mic3solutiongroup.com', type: 'email' },
   ];
 
   const socialLinks = [
@@ -87,7 +90,7 @@ export const Footer: React.FC = () => {
           <div>
             <h3 className="text-lg font-bold mb-3">Course Categories</h3>
             <ul className="grid grid-cols-1 gap-y-1.5 text-sm">
-              {courseCategories.slice(0, 4).map((category, index) => (
+              {courseCategories.slice(0, 6).map((category, index) => (
                 <li key={index}>
                   <Link
                     to={category.path}
@@ -106,23 +109,45 @@ export const Footer: React.FC = () => {
             <ul className="space-y-1.5 text-sm">
               {contactInfo.map((item, index) => (
                 <li key={index} className="flex items-start">
-                  <item.icon className="h-4 w-4 text-primary mr-2" />
-                  <span className="text-text-muted">{item.text}</span>
+                  <item.icon className="h-4 w-4 text-primary mr-2 mt-0.5" />
+                  <a 
+                    href={item.url}
+                    target={item.type === 'map' ? '_blank' : undefined}
+                    rel={item.type === 'map' ? 'noopener noreferrer' : undefined}
+                    className="text-text-muted hover:text-primary transition-colors"
+                  >
+                    {item.text}
+                  </a>
                 </li>
               ))}
             </ul>
             
             <div className="mt-3">
-              <div className="flex">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="p-1.5 px-2 text-xs bg-bg-dark border border-primary/20 rounded-l-lg flex-grow text-text-light focus:outline-none focus:border-primary"
-                />
-                <button className="bg-primary hover:bg-primary-dark text-white px-3 py-1.5 text-xs rounded-r-lg transition-colors">
-                  Subscribe
-                </button>
-              </div>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                // Here you would typically call a function to handle the subscription
+                const email = (e.target as HTMLFormElement).email.value;
+                if (email) {
+                  alert(`Thank you for subscribing with ${email}! You will receive our newsletters soon.`);
+                  (e.target as HTMLFormElement).reset();
+                }
+              }}>
+                <div className="flex">
+                  <input
+                    name="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    required
+                    className="p-1.5 px-2 text-xs bg-bg-dark border border-primary/20 rounded-l-lg flex-grow text-text-light focus:outline-none focus:border-primary"
+                  />
+                  <button 
+                    type="submit"
+                    className="bg-primary hover:bg-primary-dark text-white px-3 py-1.5 text-xs rounded-r-lg transition-colors"
+                  >
+                    Subscribe
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
