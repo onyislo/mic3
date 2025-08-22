@@ -13,7 +13,7 @@ This guide explains how to set up your Supabase project for the MIC3 website.
    VITE_SITE_URL=https://your-production-domain.com
    ```
    Note: For local development, use `http://localhost:5173` as your `VITE_SITE_URL`.
-   For production, use your actual domain name (e.g., `https://mic3solutiongroup.com`).
+   For production, use your actual domain name.
 
 ## Step 2: Set Up Authentication
 
