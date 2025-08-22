@@ -151,8 +151,7 @@ export const Contact: React.FC = () => {
                 <Phone className="h-6 w-6 text-primary mr-4 mt-1" />
                 <div>
                   <h3 className="font-semibold mb-1">Phone</h3>
-                  <a href="tel:+254712345678" className="text-text-muted hover:text-primary transition-colors block">+254 712 345 678</a>
-                  <a href="tel:+254700000000" className="text-text-muted hover:text-primary transition-colors block">+254 700 000 000</a>
+                  <a href="tel:+254797176466" className="text-text-muted hover:text-primary transition-colors block">+254 797 176 466</a>
                 </div>
               </div>
 
@@ -161,12 +160,12 @@ export const Contact: React.FC = () => {
                 <div>
                   <h3 className="font-semibold mb-1">Office</h3>
                   <a 
-                    href="https://maps.google.com/?q=Karen,Nairobi,Kenya" 
+                    href="https://maps.google.com/?q=Nairobi,Kenya" 
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-text-muted hover:text-primary transition-colors block"
                   >
-                    Karen, Nairobi, Kenya<br />
+                    Nairobi, Kenya<br />
                   </a>
                 </div>
               </div>

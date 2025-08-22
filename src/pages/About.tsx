@@ -5,10 +5,10 @@ export const About: React.FC = () => {
   // Team members data
   const teamMembers = [
     {
-      name: 'Hillary Lihand',
+      name: 'Hillary Lihanda',
       role: 'CEO & Founder',
-      bio: 'Hillary brings over 15 years of experience in technology innovation and business leadership. With a background in computer science and business administration, he has successfully led multiple tech initiatives and startups to success.',
-      image: 'https://randomuser.me/api/portraits/men/32.jpg', // Placeholder image
+      bio: 'Over 15 years of technology innovation experience. Computer science and business administration background with proven success leading tech initiatives and startups.',
+      image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=500&q=80', // Professional African male in suit
       social: {
         linkedin: 'https://linkedin.com/',
         twitter: 'https://twitter.com/'
@@ -17,8 +17,8 @@ export const About: React.FC = () => {
     {
       name: 'Sarah Mwangi',
       role: 'Chief Technology Officer',
-      bio: 'Sarah leads our technical team with expertise in cloud architecture and enterprise solutions. Her innovative approach to technology challenges has been instrumental in our product development.',
-      image: 'https://randomuser.me/api/portraits/women/44.jpg', // Placeholder image
+      bio: 'Cloud architecture and enterprise solutions expert. Her innovative approach to technology challenges drives our product development success.',
+      image: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=500&q=80', // Professional African female
       social: {
         linkedin: 'https://linkedin.com/',
         twitter: 'https://twitter.com/'
@@ -27,8 +27,8 @@ export const About: React.FC = () => {
     {
       name: 'David Ochieng',
       role: 'Head of Development',
-      bio: 'David oversees our development teams and ensures high-quality code standards across all projects. His technical leadership has shaped our development practices and client solutions.',
-      image: 'https://randomuser.me/api/portraits/men/67.jpg', // Placeholder image
+      bio: 'Oversees development teams and ensures quality code standards. Technical leadership that shapes our development practices and client solutions.',
+      image: 'https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=500&q=80', // Different professional African male image
       social: {
         linkedin: 'https://linkedin.com/',
         twitter: 'https://twitter.com/'
@@ -71,19 +71,15 @@ export const About: React.FC = () => {
                 that empower businesses to thrive in the digital era.
               </p>
               <p className="text-text-muted mb-5 leading-relaxed">
-                MIC3 Solution Group was founded in 2020 with a mission to help businesses leverage technology 
-                to solve complex problems and drive growth. What began as a small consultancy has grown into 
-                a comprehensive digital solutions provider serving clients across East Africa and beyond.
-              </p>
-              <p className="text-text-muted mb-5 leading-relaxed">
-                Our journey started when our founder, Hillary Lihand, identified a gap in the market for 
-                high-quality, personalized technology services that truly understand the unique challenges 
-                of African businesses. Since then, we've assembled a team of talented professionals who 
-                share our passion for innovation and excellence.
+                Founded in 2020 by Hillary Lihanda, MIC3 Solution Group bridges the technology gap for 
+                African businesses with personalized digital services. We began as a small consultancy 
+                and have evolved into a comprehensive solutions provider serving clients across East Africa 
+                and beyond.
               </p>
               <p className="text-text-muted leading-relaxed">
-                Today, we're proud to have helped dozens of organizations transform their operations, 
-                reach new customers, and achieve their business objectives through our tailored digital solutions.
+                Our talented team of professionals has helped dozens of organizations transform operations, 
+                expand customer reach, and achieve business objectives through tailored technology solutions 
+                that address unique market challenges.
               </p>
             </div>
             <div className="relative">
@@ -109,7 +105,7 @@ export const About: React.FC = () => {
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold mb-3">Our Values</h2>
             <p className="text-xl text-text-muted max-w-2xl mx-auto">
-              These core principles guide everything we do as we work to deliver exceptional solutions for our clients.
+              Core principles that drive our commitment to excellence.
             </p>
           </div>
           
@@ -133,27 +129,27 @@ export const About: React.FC = () => {
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold mb-3">Our Leadership Team</h2>
             <p className="text-xl text-text-muted max-w-2xl mx-auto">
-              Meet the talented individuals behind MIC3 Solution Group who drive our vision and success.
+              The talent behind MIC3 Solution Group's vision and success.
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {teamMembers.map((member, index) => (
               <div 
                 key={index}
                 className="bg-bg-dark rounded-xl overflow-hidden border border-primary/20 group hover:border-primary/40 transition-all duration-300"
               >
-                <div className="h-64 overflow-hidden">
+                <div className="h-56 overflow-hidden flex justify-center items-center bg-bg-dark-light">
                   <img 
                     src={member.image} 
                     alt={member.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="h-full w-auto max-w-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>
-                <div className="p-5">
-                  <h3 className="text-xl font-bold mb-1">{member.name}</h3>
-                  <p className="text-primary mb-3">{member.role}</p>
-                  <p className="text-text-muted text-sm mb-4">{member.bio}</p>
+                <div className="p-4">
+                  <h3 className="text-lg font-bold mb-1">{member.name}</h3>
+                  <p className="text-primary mb-2">{member.role}</p>
+                  <p className="text-text-muted text-sm mb-3">{member.bio}</p>
                   
                   <div className="flex space-x-3">
                     <a href={member.social.linkedin} className="text-text-muted hover:text-primary transition-colors">
@@ -199,7 +195,7 @@ export const About: React.FC = () => {
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl font-bold mb-4">Ready to Work Together?</h2>
           <p className="text-xl text-text-muted mb-6">
-            Contact us today to discuss how MIC3 Solution Group can help your business thrive in the digital landscape.
+            Let's discuss how we can help your business thrive digitally.
           </p>
           <button className="bg-primary hover:bg-primary-dark text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors inline-flex items-center justify-center">
             Contact Our Team

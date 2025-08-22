@@ -29,8 +29,8 @@ export const Footer: React.FC = () => {
   ];
 
   const contactInfo = [
-    { icon: MapPin, text: 'Karen, Nairobi, Kenya', url: 'https://maps.google.com/?q=Karen,Nairobi,Kenya', type: 'map' },
-    { icon: Phone, text: '+254 712 345 678', url: 'tel:+254712345678', type: 'phone' },
+    { icon: MapPin, text: 'Nairobi, Kenya', url: 'https://maps.google.com/?q=Nairobi,Kenya', type: 'map' },
+    { icon: Phone, text: '+254 797 176 466', url: 'tel:+254797176466', type: 'phone' },
     { icon: Mail, text: 'info@mic3solutiongroup.com', url: 'mailto:info@mic3solutiongroup.com', type: 'email' },
   ];
 

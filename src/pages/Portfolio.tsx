@@ -1,7 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Code, Database, Shield, ArrowRight, ExternalLink, BookOpen, Award, Users, Loader } from 'lucide-react';
 
 export const Portfolio: React.FC = () => {
+  const navigate = useNavigate();
+  
+  // Function to handle view project button click
+  const handleViewProject = (project: PortfolioProject) => {
+    // If project has a custom link, navigate to that
+    if (project.link && project.link !== '#') {
+      window.open(project.link, '_blank');
+    } else {
+      // Otherwise navigate to a detail page with the project title as a parameter
+      // We'll encode the title to make it URL-friendly
+      navigate(`/portfolio/${encodeURIComponent(project.title)}`);
+    }
+  };
   const services = [
     {
       icon: BookOpen,
@@ -204,7 +218,8 @@ export const Portfolio: React.FC = () => {
             {portfolioProjects.map((project, index) => (
               <div
                 key={index}
-                className="bg-bg-dark-light rounded-xl overflow-hidden hover:transform hover:scale-105 transition-all duration-300 border border-primary/20"
+                onClick={() => handleViewProject(project)}
+                className="bg-bg-dark-light rounded-xl overflow-hidden hover:transform hover:scale-105 transition-all duration-300 border border-primary/20 cursor-pointer"
               >
                 <img
                   src={project.image}
@@ -214,7 +229,10 @@ export const Portfolio: React.FC = () => {
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-primary font-medium">{project.category}</span>
-                    <ExternalLink className="h-4 w-4 text-text-muted hover:text-primary cursor-pointer" />
+                    <ExternalLink 
+                      onClick={() => handleViewProject(project)} 
+                      className="h-4 w-4 text-text-muted hover:text-primary cursor-pointer" 
+                    />
                   </div>
                   <h3 className="text-xl font-semibold mb-2">{project.title}</h3>
                   <p className="text-text-muted mb-4 text-sm">{project.description}</p>
@@ -230,8 +248,12 @@ export const Portfolio: React.FC = () => {
                     ))}
                   </div>
                   
-                  <button className="w-full bg-primary hover:bg-primary-dark text-white py-2 px-4 rounded-lg font-medium transition-colors">
+                  <button 
+                    onClick={() => handleViewProject(project)} 
+                    className="w-full bg-primary hover:bg-primary-dark text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center"
+                  >
                     View Project
+                    <ExternalLink className="ml-2 h-4 w-4" />
                   </button>
                 </div>
               </div>

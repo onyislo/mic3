@@ -19,6 +19,7 @@ import { UpdatePassword } from './pages/UpdatePassword';
 import { Dashboard } from './pages/Dashboard';
 import { Contact } from './pages/Contact';
 import { Portfolio } from './pages/Portfolio';
+import ProjectDetail from './pages/ProjectDetail';
 import About from './pages/About';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
@@ -42,6 +43,7 @@ function App() {
             {/* Public Routes */}
             <Route path="/" element={<Layout><Home /></Layout>} />
             <Route path="/portfolio" element={<Layout><Portfolio /></Layout>} />
+            <Route path="/portfolio/:projectTitle" element={<Layout><ProjectDetail /></Layout>} />
             <Route path="/about" element={<Layout><About /></Layout>} />
             <Route path="/courses" element={<Layout><Courses /></Layout>} />
             <Route path="/courses/:courseId" element={<Layout><CourseDetail /></Layout>} />
