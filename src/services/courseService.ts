@@ -206,6 +206,40 @@ export const updateCourse = async (id: string, courseData: Partial<CourseInput>)
 // Delete a course
 export const deleteCourse = async (id: string): Promise<boolean> => {
   try {
+    // First delete associated payments
+    const { error: paymentsError } = await supabase
+      .from('Payments')
+      .delete()
+      .eq('course_id', id);
+    
+    if (paymentsError) {
+      console.error('Error deleting associated payments:', paymentsError);
+      return false;
+    }
+    
+    // Next delete any course progress records
+    const { error: progressError } = await supabase
+      .from('course_progress')
+      .delete()
+      .eq('course_id', id);
+    
+    if (progressError) {
+      console.error('Error deleting associated course progress:', progressError);
+      return false;
+    }
+    
+    // Delete course content
+    const { error: contentError } = await supabase
+      .from('course_content')
+      .delete()
+      .eq('course_id', id);
+    
+    if (contentError) {
+      console.error('Error deleting associated course content:', contentError);
+      return false;
+    }
+    
+    // Finally delete the course
     const { error } = await supabase
       .from('Courses')
       .delete()
@@ -274,7 +308,7 @@ export const getActiveCourses = async (): Promise<Course[]> => {
 export const getCourseStudentCount = async (courseId: string): Promise<number> => {
   try {
     const { count, error } = await supabase
-      .from('Course_Progress')  // Using capitalized version to match other tables
+      .from('course_progress')  // Using lowercase version to match actual table name
       .select('*', { count: 'exact', head: true })
       .eq('course_id', courseId);
 

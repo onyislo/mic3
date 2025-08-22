@@ -35,7 +35,7 @@ export const Courses: React.FC = () => {
       students: 1200,
       rating: 4.8,
       instructor: 'John Doe',
-      image: 'https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg?auto=compress&cs=tinysrgb&w=400',
+      image: '', // No default image
       category: 'Frontend',
     },
     {
@@ -47,7 +47,7 @@ export const Courses: React.FC = () => {
       students: 850,
       rating: 4.7,
       instructor: 'Jane Smith',
-      image: 'https://images.pexels.com/photos/1181673/pexels-photo-1181673.jpeg?auto=compress&cs=tinysrgb&w=400',
+      image: '', // No default image
       category: 'Backend',
     },
   ], []);
@@ -61,18 +61,21 @@ export const Courses: React.FC = () => {
         // Map the Supabase course structure to our display structure
         // Properly type the data from API
         const apiData = data as CourseType[];
-        const displayCourses: DisplayCourse[] = apiData.map((course) => ({
-          id: course.id,
-          title: course["Course Title"] || "",
-          description: course["Description"] || "",
-          price: course["Price"] || 0,
-          duration: course.duration || "8 weeks",
-          students: 0, // We don't have this data yet
-          rating: 5.0, // Default rating
-          instructor: course["Instructor"] || "Instructor",
-          image: course.image_url || "https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg?auto=compress&cs=tinysrgb&w=400",
-          category: course.category || "General"
-        }));
+        const displayCourses: DisplayCourse[] = apiData.map((course) => {
+          console.log("Course from API:", course);
+          return {
+            id: course.id,
+            title: course["Course Title"] || "",
+            description: course["Description"] || "",
+            price: course["Price"] || 0,
+            duration: course.duration || "8 weeks",
+            students: 0, // We don't have this data yet
+            rating: 5.0, // Default rating
+            instructor: course["Instructor"] || "Instructor",
+            image: course.image_url || "",  // Don't use a default here, let the onError handler handle it
+            category: course.category || "General"
+          };
+        });
         
         // Only use active courses
         const activeCourses = displayCourses.filter(course => 
@@ -158,15 +161,22 @@ export const Courses: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredCourses.map((course) => (
             <div key={course.id} className="bg-bg-dark-light rounded-xl overflow-hidden hover:transform hover:scale-105 transition-transform">
-              <img
-                src={course.image || 'https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg?auto=compress&cs=tinysrgb&w=800'}
-                alt={course.title}
-                className="w-full h-48 object-cover"
-                onError={(e) => {
-                  // Fallback to a default image if the image URL fails to load
-                  (e.target as HTMLImageElement).src = 'https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg?auto=compress&cs=tinysrgb&w=800';
-                }}
-              />
+              {course.image ? (
+                <img
+                  src={course.image}
+                  alt={course.title}
+                  className="w-full h-48 object-cover"
+                  onError={(e) => {
+                    // Hide the image if it fails to load
+                    console.log("Image load error for course:", course.title);
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              ) : (
+                <div className="w-full h-48 bg-bg-dark-light flex items-center justify-center">
+                  <span className="text-text-muted">No image available</span>
+                </div>
+              )}
               <div className="p-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-primary font-medium">{course.category}</span>

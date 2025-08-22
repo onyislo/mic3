@@ -109,10 +109,13 @@ export const AdminCourses: React.FC = () => {
       // If there's an image, upload it first
       let imageUrl = '';
       if (courseImage) {
+        console.log("Course image file:", courseImage.name, "Size:", courseImage.size, "Type:", courseImage.type);
         // Upload the image using the storageService
         const uploadedUrl = await uploadImage(courseImage);
+        console.log("Uploaded URL from storage service:", uploadedUrl);
         if (uploadedUrl) {
           imageUrl = uploadedUrl;
+          console.log("Using image URL:", imageUrl);
         } else {
           setError('Failed to upload image. Please try again.');
           return;
@@ -150,8 +153,11 @@ export const AdminCourses: React.FC = () => {
   };
 
   const handleDeleteCourse = async (id: string) => {
-    if (confirm('Are you sure you want to delete this course?')) {
+    if (confirm('Are you sure you want to delete this course? This will also delete all related payments and progress records.')) {
       try {
+        setLoading(true);
+        setError(null);
+        
         const success = await deleteCourse(id);
         if (success) {
           // Refresh courses list
@@ -161,7 +167,9 @@ export const AdminCourses: React.FC = () => {
         }
       } catch (err) {
         console.error('Error deleting course:', err);
-        setError('Failed to delete course. Please try again.');
+        setError('Failed to delete course. Please check if there are still related records in the database.');
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -564,15 +572,20 @@ export const AdminCourses: React.FC = () => {
                   <tr key={course.id} className="hover:bg-red-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
-                        {course.image_url && (
+                        {course.image_url ? (
                           <img 
                             src={course.image_url} 
                             alt={course["Course Title"]}
                             className="w-10 h-10 object-cover rounded"
                             onError={(e) => {
+                              console.log("Image failed to load:", course.image_url);
                               (e.target as HTMLImageElement).style.display = 'none';
                             }}
                           />
+                        ) : (
+                          <div className="w-10 h-10 bg-red-50 flex items-center justify-center rounded">
+                            <span className="text-xs text-red-400">No img</span>
+                          </div>
                         )}
                         <div>
                           <div className="text-sm font-medium text-red-900">{course["Course Title"]}</div>

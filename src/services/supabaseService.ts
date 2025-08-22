@@ -396,7 +396,7 @@ export const enrollUserInCourse = async (userId: string, courseId: string) => {
     
     // Create initial progress record
     const { error: progressError } = await supabase
-      .from('Course_Progress')
+      .from('course_progress')
       .insert({
         user_id: userId,
         course_id: courseId,
@@ -490,7 +490,7 @@ export const deleteUser = async (userId: string) => {
     
     // Delete course progress
     const { error: progressError } = await supabase
-      .from('Course_Progress')
+      .from('course_progress')
       .delete()
       .eq('user_id', userId);
     
@@ -510,7 +510,7 @@ export const deleteUser = async (userId: string) => {
     
     // Delete user badges
     const { error: badgesError } = await supabase
-      .from('User_Badges')
+      .from('user_badges')
       .delete()
       .eq('user_id', userId);
     

@@ -53,7 +53,7 @@ export const CourseDetail: React.FC = () => {
               students: 0, // Default value since it's not in our database yet
               rating: 5.0, // Default value since it's not in our database yet
               instructor: dbCourse["Instructor"] || "Expert Instructor",
-              image: dbCourse.image_url || "https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg?auto=compress&cs=tinysrgb&w=800",
+              image: dbCourse.image_url || "",
               category: dbCourse.category || "General",
               lessons: 10, // Default value
               // Default values for arrays since they're not in our database yet
@@ -88,7 +88,7 @@ export const CourseDetail: React.FC = () => {
           students: 1200,
           rating: 4.8,
           instructor: 'John Doe',
-          image: 'https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg?auto=compress&cs=tinysrgb&w=800',
+          image: '',
           category: 'Frontend',
           lessons: 45,
           features: ['Lifetime access to course content', 'Certificate of completion'],
@@ -171,15 +171,22 @@ export const CourseDetail: React.FC = () => {
               </div>
             </div>
 
-            <img
-              src={course.image || 'https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg?auto=compress&cs=tinysrgb&w=800'}
-              alt={course.title}
-              className="w-full h-64 object-cover rounded-lg mb-8"
-              onError={(e) => {
-                // Fallback to a default image if the image URL fails to load
-                (e.target as HTMLImageElement).src = 'https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg?auto=compress&cs=tinysrgb&w=800';
-              }}
-            />
+            {course.image ? (
+              <img
+                src={course.image}
+                alt={course.title}
+                className="w-full h-64 object-cover rounded-lg mb-8"
+                onError={(e) => {
+                  // Hide the image if it fails to load
+                  console.log("Image load error in course detail for:", course.title);
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            ) : (
+              <div className="w-full h-64 bg-bg-dark-light flex items-center justify-center rounded-lg mb-8">
+                <span className="text-text-muted">No course image available</span>
+              </div>
+            )}
 
             {/* Course Tabs */}
             <div className="space-y-8">

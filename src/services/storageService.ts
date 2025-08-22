@@ -14,9 +14,13 @@ export const uploadImage = async (
   folder: string = 'courses'
 ): Promise<string | null> => {
   try {
+    console.log("Uploading image:", file.name, "Size:", file.size, "Type:", file.type);
+    
     // Create a unique filename to prevent collisions
     const fileExt = file.name.split('.').pop();
     const fileName = `${folder}/${uuidv4()}.${fileExt}`;
+    
+    console.log("Generated file name:", fileName);
     
     // Upload the file to Supabase Storage
     const { error } = await supabase.storage
@@ -35,7 +39,8 @@ export const uploadImage = async (
     const { data: urlData } = supabase.storage
       .from(bucket)
       .getPublicUrl(fileName);
-      
+    
+    console.log("Generated public URL:", urlData.publicUrl);  
     return urlData.publicUrl;
   } catch (error) {
     console.error('Error in uploadImage:', error);
