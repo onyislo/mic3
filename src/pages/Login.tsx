@@ -129,9 +129,9 @@ export const Login: React.FC = () => {
             </div>
 
             <div className="text-sm">
-              <a href="#" className="font-medium text-primary hover:text-primary-dark transition-colors">
+              <Link to="/reset-password" className="font-medium text-primary hover:text-primary-dark transition-colors">
                 Forgot your password?
-              </a>
+              </Link>
             </div>
           </div>
 
