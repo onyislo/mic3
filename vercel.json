@@ -5,6 +5,8 @@
     { "src": "/courses/(.*)", "dest": "/index.html", "status": 200 },
     { "src": "/login", "dest": "/index.html", "status": 200 },
     { "src": "/register", "dest": "/index.html", "status": 200 },
+    { "src": "/reset-password", "dest": "/index.html", "status": 200 },
+    { "src": "/update-password", "dest": "/index.html", "status": 200 },
     { "src": "/dashboard", "dest": "/index.html", "status": 200 },
     { "src": "/contact", "dest": "/index.html", "status": 200 },
     { "src": "/portfolio", "dest": "/index.html", "status": 200 },

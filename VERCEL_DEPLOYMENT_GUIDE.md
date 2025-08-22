@@ -18,6 +18,7 @@ You must configure these environment variables in the Vercel dashboard:
 |------|-------|-------------|
 | `VITE_SUPABASE_URL` | `https://hucxgczibzdqpaiuvwrf.supabase.co` | Your Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1Y3hnY3ppYnpkcXBhaXV2d3JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MTQ1NTQsImV4cCI6MjA3MTE5MDU1NH0.fJSyNAF7peA1mvcZyTJkDgljzmQSgiegVADBEOjkUlc` | Your Supabase anonymous key |
+| `VITE_SITE_URL` | `https://your-production-domain.com` | Your production site URL (required for password reset functionality) |
 
 ⚠️ **Note**: Do not hardcode these values in `vercel.json` or any source files. Always use the Vercel dashboard for security reasons.
 

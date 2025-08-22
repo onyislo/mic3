@@ -14,8 +14,12 @@ export const ResetPassword: React.FC = () => {
     setMessage(null);
 
     try {
+      // Use your production URL instead of window.location.origin
+      // This ensures the reset link works in all environments
+      const siteUrl = import.meta.env.VITE_SITE_URL || window.location.origin;
+      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/update-password`,
+        redirectTo: `${siteUrl}/update-password`,
       });
 
       if (error) {

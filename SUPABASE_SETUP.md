@@ -10,7 +10,10 @@ This guide explains how to set up your Supabase project for the MIC3 website.
    ```
    VITE_SUPABASE_URL=https://your-project-url.supabase.co
    VITE_SUPABASE_ANON_KEY=your-anon-public-key
+   VITE_SITE_URL=https://your-production-domain.com
    ```
+   Note: For local development, use `http://localhost:5173` as your `VITE_SITE_URL`.
+   For production, use your actual domain name.
 
 ## Step 2: Set Up Authentication
 
@@ -18,6 +21,9 @@ This guide explains how to set up your Supabase project for the MIC3 website.
 2. Configure Email Authentication:
    - Enable "Email Signup"
    - Enable "Email Confirmations" if you want users to confirm their email
+   - Under "URL Configuration":
+     - Set Site URL to your production domain (e.g., `https://your-production-domain.com`)
+     - Add Redirect URLs for password reset: `https://your-production-domain.com/update-password`
 3. Configure OAuth Providers (Optional):
    - Set up Google OAuth provider
    - Add the redirect URL: `https://your-vercel-domain.com/auth/callback` or your local development URL `http://localhost:5173/auth/callback`
