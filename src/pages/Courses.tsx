@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, Users, Star, Search } from 'lucide-react';
 import { api } from '../services/api';
+import { Course as CourseType } from '../types/CourseTypes';
 
-interface Course {
+// A display-friendly interface for rendering courses
+interface DisplayCourse {
   id: string;
-  slug: string;
   title: string;
   description: string;
   price: number;
@@ -18,17 +19,15 @@ interface Course {
 }
 
 export const Courses: React.FC = () => {
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courses, setCourses] = useState<DisplayCourse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-
-  // Mock data for demo
-  const mockCourses: Course[] = [
+  
+  // Use useMemo to prevent the defaultCourses array from being recreated on each render
+  const defaultCourses = useMemo<DisplayCourse[]>(() => [
     {
       id: '1',
-      slug: 'react-masterclass',
       title: 'React Masterclass',
       description: 'Learn React from beginner to advanced level with real-world projects.',
       price: 2500,
@@ -41,7 +40,6 @@ export const Courses: React.FC = () => {
     },
     {
       id: '2',
-      slug: 'nodejs-backend',
       title: 'Node.js Backend Development',
       description: 'Build scalable backend applications with Node.js, Express, and MongoDB.',
       price: 3000,
@@ -52,53 +50,55 @@ export const Courses: React.FC = () => {
       image: 'https://images.pexels.com/photos/1181673/pexels-photo-1181673.jpeg?auto=compress&cs=tinysrgb&w=400',
       category: 'Backend',
     },
-    {
-      id: '3',
-      slug: 'mobile-app-development',
-      title: 'Mobile App Development',
-      description: 'Create mobile apps for iOS and Android using React Native.',
-      price: 3500,
-      duration: '14 weeks',
-      students: 650,
-      rating: 4.9,
-      instructor: 'Mike Johnson',
-      image: 'https://images.pexels.com/photos/607812/pexels-photo-607812.jpeg?auto=compress&cs=tinysrgb&w=400',
-      category: 'Mobile',
-    },
-    {
-      id: '4',
-      slug: 'ui-ux-design',
-      title: 'UI/UX Design Fundamentals',
-      description: 'Master the principles of user interface and user experience design.',
-      price: 2000,
-      duration: '8 weeks',
-      students: 950,
-      rating: 4.6,
-      instructor: 'Sarah Wilson',
-      image: 'https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=400',
-      category: 'Design',
-    },
-  ];
+  ], []);
 
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        // Try to fetch from API first
+        // Try to fetch from API
         const data = await api.getCourses();
-        setCourses(data);
-      } catch (err) {
-        // Fall back to mock data if API fails
-        console.log('Using mock data for courses');
-        setCourses(mockCourses);
+        
+        // Map the Supabase course structure to our display structure
+        // Properly type the data from API
+        const apiData = data as CourseType[];
+        const displayCourses: DisplayCourse[] = apiData.map((course) => ({
+          id: course.id,
+          title: course["Course Title"] || "",
+          description: course["Description"] || "",
+          price: course["Price"] || 0,
+          duration: course.duration || "8 weeks",
+          students: 0, // We don't have this data yet
+          rating: 5.0, // Default rating
+          instructor: course["Instructor"] || "Instructor",
+          image: course.image_url || "https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg?auto=compress&cs=tinysrgb&w=400",
+          category: course.category || "General"
+        }));
+        
+        // Only use active courses
+        const activeCourses = displayCourses.filter(course => 
+          course.title && course.description && course.price > 0
+        );
+        
+        if (activeCourses.length > 0) {
+          setCourses(activeCourses);
+        } else {
+          // Fall back to default courses if no active courses
+          setCourses(defaultCourses);
+        }
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+        // Fall back to default courses if API fails
+        setCourses(defaultCourses);
       } finally {
         setLoading(false);
       }
     };
 
     fetchCourses();
-  }, []);
+  }, [defaultCourses]);
 
-  const categories = ['all', ...Array.from(new Set(mockCourses.map(course => course.category)))];
+  // Extract categories from actual courses
+  const categories = ['all', ...Array.from(new Set(courses.map(course => course.category)))];
 
   const filteredCourses = courses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -137,8 +137,8 @@ export const Courses: React.FC = () => {
               className="w-full pl-10 pr-4 py-2 bg-bg-dark-light border border-primary/20 rounded-lg text-text-light placeholder-text-muted focus:outline-none focus:border-primary"
             />
           </div>
-          <div className="flex gap-2">
-            {categories.map((category) => (
+          <div className="flex gap-2 overflow-x-auto">
+            {categories.map((category: string) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
@@ -159,9 +159,13 @@ export const Courses: React.FC = () => {
           {filteredCourses.map((course) => (
             <div key={course.id} className="bg-bg-dark-light rounded-xl overflow-hidden hover:transform hover:scale-105 transition-transform">
               <img
-                src={course.image}
+                src={course.image || 'https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg?auto=compress&cs=tinysrgb&w=800'}
                 alt={course.title}
                 className="w-full h-48 object-cover"
+                onError={(e) => {
+                  // Fallback to a default image if the image URL fails to load
+                  (e.target as HTMLImageElement).src = 'https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg?auto=compress&cs=tinysrgb&w=800';
+                }}
               />
               <div className="p-6">
                 <div className="flex items-center justify-between mb-2">
@@ -188,7 +192,7 @@ export const Courses: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold text-primary">KSh {course.price.toLocaleString()}</span>
                   <Link
-                    to={`/courses/${course.slug}`}
+                    to={`/courses/${course.id}`}
                     className="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-lg font-medium transition-colors"
                   >
                     View Course

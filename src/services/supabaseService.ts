@@ -39,7 +39,7 @@ export const updateUserProfile = async (userId: string, updates: Partial<UserPro
 // Course Services
 export const getCourses = async (): Promise<Course[]> => {
   const { data, error } = await supabase
-    .from('courses')
+    .from('Courses')
     .select('*')
     .order('created_at', { ascending: false });
 
@@ -53,7 +53,7 @@ export const getCourses = async (): Promise<Course[]> => {
 
 export const getCourseById = async (courseId: string): Promise<Course | null> => {
   const { data, error } = await supabase
-    .from('courses')
+    .from('Courses')
     .select('*')
     .eq('id', courseId)
     .single();
@@ -210,7 +210,7 @@ const checkAndAwardBadge = async (userId: string, courseId: string) => {
   try {
     // Get the course details to determine which badge to award
     const { data: course } = await supabase
-      .from('courses')
+      .from('Courses')
       .select('category, level')
       .eq('id', courseId)
       .single();
@@ -265,7 +265,7 @@ export const getAdminAnalytics = async () => {
     
     // Get total courses
     const { count: courseCount } = await supabase
-      .from('courses')
+      .from('Courses')
       .select('*', { count: 'exact', head: true });
     
     // Get total payments
@@ -363,7 +363,7 @@ export const enrollUserInCourse = async (userId: string, courseId: string) => {
   try {
     // Check if the course exists
     const { data: course } = await supabase
-      .from('courses')
+      .from('Courses')
       .select('*')
       .eq('id', courseId)
       .single();

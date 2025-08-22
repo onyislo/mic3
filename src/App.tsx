@@ -40,8 +40,8 @@ function App() {
             <Route path="/portfolio" element={<Layout><Portfolio /></Layout>} />
             <Route path="/about" element={<Layout><About /></Layout>} />
             <Route path="/courses" element={<Layout><Courses /></Layout>} />
-            <Route path="/courses/:slug" element={<Layout><CourseDetail /></Layout>} />
-            <Route path="/courses/:slug/content" element={
+            <Route path="/courses/:courseId" element={<Layout><CourseDetail /></Layout>} />
+            <Route path="/courses/:courseId/content" element={
               <ProtectedRoute>
                 <CourseContent />
               </ProtectedRoute>

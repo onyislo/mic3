@@ -9,6 +9,19 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// Import centralized types
+import { 
+  Course, 
+  CourseContent, 
+  CourseProgress, 
+  Payment 
+} from '../types/CourseTypes';
+
+// Export the imported types for backward compatibility
+export type { Course, CourseContent, CourseProgress };
+export type CoursePayment = Payment;
+
+// Local types still defined here
 export type UserProfile = {
   id: string;
   user_id: string;
@@ -17,29 +30,6 @@ export type UserProfile = {
   created_at: string;
   updated_at: string;
   avatar_url?: string;
-};
-
-export type CourseProgress = {
-  id: string;
-  user_id: string;
-  course_id: string;
-  progress_percentage: number;
-  last_accessed: string;
-  is_completed: boolean;
-  created_at: string;
-  updated_at: string;
-};
-
-export type CoursePayment = {
-  id: string;
-  user_id: string;
-  course_id: string;
-  amount: number;
-  status: 'pending' | 'completed' | 'failed';
-  payment_date: string;
-  payment_method: string;
-  created_at: string;
-  updated_at: string;
 };
 
 export type Badge = {
@@ -56,17 +46,4 @@ export type UserBadge = {
   badge_id: string;
   earned_date: string;
   created_at: string;
-};
-
-export type Course = {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  duration: string;
-  level: 'beginner' | 'intermediate' | 'advanced';
-  image_url: string;
-  category: string;
-  created_at: string;
-  updated_at: string;
 };

@@ -21,6 +21,16 @@ This is the frontend application for MIC3 Solutions Group, built with React, Typ
 - Context API for state management
 - Supabase for backend (authentication, database, and storage)
 
+## Important Database Naming Conventions
+
+Supabase database table and column names are **case-sensitive** and **preserve spaces**. This project uses specific naming conventions documented in [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md).
+
+Key tables include:
+- `Courses` - With columns like `Course Title`, `Description`, and `Instructor` (note the capitalization)
+- `Course_Content` - Contains course materials with `Title`, `Content`, `Module`, and `Order` columns
+- `Course_Progress` - Tracks user progress through courses
+- `Payments` - Records payment information
+
 ## Getting Started
 
 ### Prerequisites
@@ -47,6 +57,8 @@ This is the frontend application for MIC3 Solutions Group, built with React, Typ
 
 4. Set up Supabase:
    - Follow the instructions in [SUPABASE_SETUP.md](./SUPABASE_SETUP.md)
+   - Ensure your database schema follows the conventions in [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md)
+   - Run the database setup script if needed: [fix-table-capitalization.sql](./fix-table-capitalization.sql)
 
 5. Start the development server:
    ```

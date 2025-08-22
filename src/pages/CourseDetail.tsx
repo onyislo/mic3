@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Clock, Users, Star, Play, BookOpen, Award, Smartphone } from 'lucide-react';
+import { Clock, Star, Play, BookOpen, Award, Smartphone } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { Course as CourseType } from '../types/CourseTypes';
 
-interface Course {
+// Display-specific course interface with UI-friendly structure
+interface DisplayCourse {
   id: string;
-  slug: string;
   title: string;
   description: string;
   fullDescription: string;
@@ -24,63 +25,76 @@ interface Course {
 }
 
 export const CourseDetail: React.FC = () => {
-  const { slug } = useParams<{ slug: string }>();
+  const { courseId } = useParams<{ courseId: string }>();
   const { user, isAuthenticated } = useAuth();
-  const [course, setCourse] = useState<Course | null>(null);
+  const [course, setCourse] = useState<DisplayCourse | null>(null);
   const [loading, setLoading] = useState(true);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [showPaymentForm, setShowPaymentForm] = useState(false);
 
-  // Mock course data
-  const mockCourse: Course = {
-    id: '1',
-    slug: 'react-masterclass',
-    title: 'React Masterclass',
-    description: 'Learn React from beginner to advanced level with real-world projects.',
-    fullDescription: 'This comprehensive React course will take you from a complete beginner to an advanced React developer. You\'ll learn all the fundamental concepts, advanced patterns, and best practices used in modern React development. The course includes hands-on projects, real-world examples, and everything you need to build production-ready React applications.',
-    price: 2500,
-    duration: '12 weeks',
-    students: 1200,
-    rating: 4.8,
-    instructor: 'John Doe',
-    image: 'https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg?auto=compress&cs=tinysrgb&w=800',
-    category: 'Frontend',
-    lessons: 45,
-    features: [
-      'Lifetime access to course content',
-      'Certificate of completion',
-      'Direct instructor support',
-      'Access to private community',
-      '30-day money-back guarantee',
-    ],
-    requirements: [
-      'Basic knowledge of HTML, CSS, and JavaScript',
-      'A computer with internet connection',
-      'Willingness to learn and practice',
-    ],
-    whatYoullLearn: [
-      'React fundamentals and JSX',
-      'Component lifecycle and hooks',
-      'State management with Context API and Redux',
-      'React Router for navigation',
-      'Form handling and validation',
-      'API integration and data fetching',
-      'Testing React components',
-      'Performance optimization techniques',
-      'Deployment to production',
-    ],
-  };
-
   useEffect(() => {
     const fetchCourse = async () => {
       try {
-        if (slug) {
-          const data = await api.getCourse(slug);
-          setCourse(data);
+        if (courseId) {
+          const fetchedData = await api.getCourse(courseId);
+          
+          // Map the database course structure to our display structure
+          if (fetchedData) {
+            const dbCourse = fetchedData as CourseType;
+            
+            const displayCourse: DisplayCourse = {
+              id: dbCourse.id,
+              title: dbCourse["Course Title"] || "Course Title",
+              description: dbCourse["Description"] || "Course Description",
+              fullDescription: dbCourse["Description"] || "This is a comprehensive course to help you master new skills.",
+              price: dbCourse["Price"] || 0,
+              duration: dbCourse.duration || "8 weeks",
+              students: 0, // Default value since it's not in our database yet
+              rating: 5.0, // Default value since it's not in our database yet
+              instructor: dbCourse["Instructor"] || "Expert Instructor",
+              image: dbCourse.image_url || "https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg?auto=compress&cs=tinysrgb&w=800",
+              category: dbCourse.category || "General",
+              lessons: 10, // Default value
+              // Default values for arrays since they're not in our database yet
+              features: [
+                'Lifetime access to course content', 
+                'Certificate of completion', 
+                'Personalized feedback'
+              ],
+              requirements: [
+                'Basic understanding of the subject', 
+                'Dedication to learn'
+              ],
+              whatYoullLearn: [
+                'Master the fundamentals',
+                'Apply knowledge in real-world scenarios',
+                'Build your own projects'
+              ]
+            };
+            setCourse(displayCourse);
+          }
         }
-      } catch (err) {
+      } catch (fetchError) {
+        console.error('Error fetching course:', fetchError);
         // Fall back to mock data
+        const mockCourse: DisplayCourse = {
+          id: '1',
+          title: 'React Masterclass',
+          description: 'Learn React from beginner to advanced level with real-world projects.',
+          fullDescription: 'This comprehensive React course will take you from a complete beginner to an advanced React developer.',
+          price: 2500,
+          duration: '12 weeks',
+          students: 1200,
+          rating: 4.8,
+          instructor: 'John Doe',
+          image: 'https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg?auto=compress&cs=tinysrgb&w=800',
+          category: 'Frontend',
+          lessons: 45,
+          features: ['Lifetime access to course content', 'Certificate of completion'],
+          requirements: ['Basic knowledge of HTML, CSS, and JavaScript'],
+          whatYoullLearn: ['React fundamentals and JSX', 'Component lifecycle and hooks'],
+        };
         setCourse(mockCourse);
       } finally {
         setLoading(false);
@@ -88,7 +102,7 @@ export const CourseDetail: React.FC = () => {
     };
 
     fetchCourse();
-  }, [slug]);
+  }, [courseId]);
 
   const handleMpesaPayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,7 +118,8 @@ export const CourseDetail: React.FC = () => {
       alert('Payment initiated! Please check your phone for the M-Pesa prompt.');
       setShowPaymentForm(false);
       setPhoneNumber('');
-    } catch (error) {
+    } catch (paymentError) {
+      console.error('Payment error:', paymentError);
       alert('Payment failed. Please try again.');
     } finally {
       setPaymentLoading(false);
@@ -157,9 +172,13 @@ export const CourseDetail: React.FC = () => {
             </div>
 
             <img
-              src={course.image}
+              src={course.image || 'https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg?auto=compress&cs=tinysrgb&w=800'}
               alt={course.title}
               className="w-full h-64 object-cover rounded-lg mb-8"
+              onError={(e) => {
+                // Fallback to a default image if the image URL fails to load
+                (e.target as HTMLImageElement).src = 'https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg?auto=compress&cs=tinysrgb&w=800';
+              }}
             />
 
             {/* Course Tabs */}
@@ -219,7 +238,7 @@ export const CourseDetail: React.FC = () => {
 
               {hasPurchased ? (
                 <Link
-                  to={`/courses/${course.slug}/content`}
+                  to={`/courses/${course.id}/content`}
                   className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-lg font-semibold text-center block transition-colors"
                 >
                   Access Course Content

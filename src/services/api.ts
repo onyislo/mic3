@@ -72,11 +72,27 @@ class ApiClient {
 
   // Course-specific methods
   async getCourses() {
-    return this.get('/courses');
+    try {
+      // Try to use the direct API endpoint if available
+      return await this.get('/courses');
+    } catch (error) {
+      // Fallback to Supabase direct import if needed
+      console.log('Falling back to Supabase for courses');
+      const { getCourses } = await import('./courseService');
+      return await getCourses();
+    }
   }
 
-  async getCourse(slug: string) {
-    return this.get(`/courses/${slug}`);
+  async getCourse(courseId: string) {
+    try {
+      // Try to use the direct API endpoint if available
+      return await this.get(`/courses/${courseId}`);
+    } catch (error) {
+      // Fallback to Supabase direct import if needed
+      console.log('Falling back to Supabase for course details');
+      const { getCourseById } = await import('./courseService');
+      return await getCourseById(courseId);
+    }
   }
 
   async getCourseContent(id: string) {
