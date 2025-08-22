@@ -89,7 +89,7 @@ export const updateCourseProgress = async (
 ) => {
   // Check if progress record exists
   const { data: existing } = await supabase
-    .from('course_progress')
+    .from('Course_Progress')
     .select('id')
     .eq('user_id', userId)
     .eq('course_id', courseId)
@@ -270,7 +270,7 @@ export const getAdminAnalytics = async () => {
     
     // Get total payments
     const { data: payments } = await supabase
-      .from('payments')
+      .from('Payments')
       .select('amount')
       .eq('status', 'completed');
     
@@ -279,7 +279,7 @@ export const getAdminAnalytics = async () => {
     
     // Get completed courses count
     const { count: completedCoursesCount } = await supabase
-      .from('course_progress')
+      .from('Course_Progress')
       .select('*', { count: 'exact', head: true })
       .eq('is_completed', true);
     
@@ -372,16 +372,18 @@ export const enrollUserInCourse = async (userId: string, courseId: string) => {
       throw new Error('Course not found');
     }
     
-    // Create a payment record
+    // Create an enrollment record instead of a payment
     const now = new Date().toISOString();
     
+    // Only create a payment record if we need to track it, but with admin_enrollment status
+    // so it doesn't appear as a regular completed payment
     const { error: paymentError } = await supabase
-      .from('payments')
+      .from('Payments')
       .insert({
         user_id: userId,
         course_id: courseId,
-        amount: course.price || 0, // Free if no price
-        status: 'completed',
+        amount: 0, // Free for admin enrollments
+        status: 'admin_enrolled', // Custom status that won't show as completed
         payment_date: now,
         payment_method: 'admin_enrollment',
         created_at: now,
@@ -394,7 +396,7 @@ export const enrollUserInCourse = async (userId: string, courseId: string) => {
     
     // Create initial progress record
     const { error: progressError } = await supabase
-      .from('course_progress')
+      .from('Course_Progress')
       .insert({
         user_id: userId,
         course_id: courseId,
@@ -488,7 +490,7 @@ export const deleteUser = async (userId: string) => {
     
     // Delete course progress
     const { error: progressError } = await supabase
-      .from('course_progress')
+      .from('Course_Progress')
       .delete()
       .eq('user_id', userId);
     
@@ -498,7 +500,7 @@ export const deleteUser = async (userId: string) => {
     
     // Delete payments
     const { error: paymentsError } = await supabase
-      .from('payments')
+      .from('Payments')
       .delete()
       .eq('user_id', userId);
     
@@ -508,7 +510,7 @@ export const deleteUser = async (userId: string) => {
     
     // Delete user badges
     const { error: badgesError } = await supabase
-      .from('user_badges')
+      .from('User_Badges')
       .delete()
       .eq('user_id', userId);
     

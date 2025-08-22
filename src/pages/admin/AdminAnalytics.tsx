@@ -32,7 +32,7 @@ interface Payment {
   user_id: string;
   course_id: string;
   amount: number;
-  status: 'pending' | 'completed' | 'failed' | 'refunded';
+  status: 'pending' | 'completed' | 'failed' | 'refunded' | 'admin_enrolled';
   payment_date?: string;
   payment_method?: string;
   transaction_id?: string;
@@ -135,10 +135,12 @@ const AdminAnalytics: React.FC = () => {
         const monthIndex = (new Date().getMonth() - i + 12) % 12;
         const monthName = months[monthIndex];
         
-        // Filter payments for this month and year
+        // Filter payments for this month and year (exclude admin enrollments)
         const monthlyPayments = paymentsData.filter(p => {
           const date = new Date(p.created_at);
-          return date.getMonth() === monthIndex && date.getFullYear() === currentYear;
+          return date.getMonth() === monthIndex && 
+                 date.getFullYear() === currentYear && 
+                 p.payment_method !== 'admin_enrollment';
         });
         
         // Calculate revenues by status
@@ -203,19 +205,21 @@ const AdminAnalytics: React.FC = () => {
         if (paymentsError) throw paymentsError;
         
         if (payments) {
-          // Calculate total revenue from completed payments
+          // Calculate total revenue from completed payments (exclude admin enrollments)
           const revenue = payments
-            .filter(p => p.status === 'completed')
+            .filter(p => p.status === 'completed' && p.payment_method !== 'admin_enrollment')
             .reduce((sum, p) => sum + p.amount, 0);
           setTotalRevenue(revenue);
           
-          // Count successful payments
-          const successful = payments.filter(p => p.status === 'completed').length;
+          // Count successful payments (exclude admin enrollments)
+          const successful = payments.filter(p => p.status === 'completed' && p.payment_method !== 'admin_enrollment').length;
           setSuccessfulPayments(successful);
           
-          // Set recent payments with user emails
+          // Set recent payments with user emails (exclude admin enrollments)
           const recentPaymentsWithUsers = await Promise.all(
-            payments.slice(0, 5).map(async (payment) => {
+            payments
+              .filter(p => p.payment_method !== 'admin_enrollment')
+              .slice(0, 5).map(async (payment) => {
               const { data: profile } = await supabase
                 .from('Profiles')
                 .select('email')

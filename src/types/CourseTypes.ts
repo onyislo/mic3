@@ -44,7 +44,7 @@ export interface Payment {
   user_id: string;
   course_id: string;
   amount: number;
-  status?: 'pending' | 'completed' | 'failed' | 'refunded';
+  status?: 'pending' | 'completed' | 'failed' | 'refunded' | 'admin_enrolled';
   payment_method?: string;
   transaction_id?: string;
   created_at?: string;

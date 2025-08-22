@@ -82,7 +82,19 @@ export const AdminPayments: React.FC = () => {
       (payment.course_title?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (payment.user_email?.toLowerCase() || '').includes(searchTerm.toLowerCase());
       
-    const matchesStatus = statusFilter === 'all' || payment.status === statusFilter;
+    // Handle special case for status filtering
+    let matchesStatus = false;
+    if (statusFilter === 'all') {
+      // For 'all' status, exclude admin enrollments by default unless explicitly showing them
+      matchesStatus = payment.payment_method !== 'admin_enrollment';
+    } else if (statusFilter === 'admin_enrolled') {
+      // Only show admin enrollments when explicitly requested
+      matchesStatus = payment.status === 'admin_enrolled' || payment.payment_method === 'admin_enrollment';
+    } else {
+      // For other status filters, match by status
+      matchesStatus = payment.status === statusFilter;
+    }
+    
     return matchesSearch && matchesStatus;
   });
 
@@ -92,12 +104,13 @@ export const AdminPayments: React.FC = () => {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'failed': return 'bg-red-100 text-red-800';
       case 'refunded': return 'bg-gray-100 text-gray-800';
+      case 'admin_enrolled': return 'bg-blue-100 text-blue-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const totalRevenue = payments
-    .filter(p => p.status === 'completed')
+    .filter(p => p.status === 'completed' && p.payment_method !== 'admin_enrollment')
     .reduce((sum, p) => sum + p.amount, 0);
 
   const pendingAmount = payments
@@ -179,6 +192,7 @@ export const AdminPayments: React.FC = () => {
                 <option value="pending">Pending</option>
                 <option value="failed">Failed</option>
                 <option value="refunded">Refunded</option>
+                <option value="admin_enrolled">Admin Enrolled</option>
               </select>
               <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center transition-colors">
                 <Download className="h-4 w-4 mr-2" />
@@ -222,7 +236,9 @@ export const AdminPayments: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-red-200">
-                    {filteredPayments.map((payment) => (
+                    {filteredPayments
+                      .filter(payment => payment.payment_method !== 'admin_enrollment')
+                      .map((payment) => (
                       <tr key={payment.id} className="hover:bg-red-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
