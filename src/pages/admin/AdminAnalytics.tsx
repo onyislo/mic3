@@ -60,7 +60,7 @@ const AdminAnalytics: React.FC = () => {
       // In a real application, we would have user type or category in the profiles table
       // For this example, we'll simulate it using a query to the profiles table with specific conditions
       const { data: profiles } = await supabase
-        .from('profiles')
+        .from('Profiles')
         .select('*');
         
       if (!profiles || profiles.length === 0) return;
@@ -127,7 +127,7 @@ const AdminAnalytics: React.FC = () => {
       
       // Fetch all profiles to analyze user registrations
       const { data: profiles } = await supabase
-        .from('profiles')
+        .from('Profiles')
         .select('created_at');
       
       for (let i = 0; i < 6; i++) {
@@ -188,7 +188,7 @@ const AdminAnalytics: React.FC = () => {
       try {
         // Fetch total users count
         const { count: userCount, error: userError } = await supabase
-          .from('profiles')
+          .from('Profiles')
           .select('*', { count: 'exact', head: true });
           
         if (userError) throw userError;
@@ -196,7 +196,7 @@ const AdminAnalytics: React.FC = () => {
         
         // Fetch payments data
         const { data: payments, error: paymentsError } = await supabase
-          .from('payments')
+          .from('Payments')
           .select('*')
           .order('created_at', { ascending: false });
           
@@ -217,7 +217,7 @@ const AdminAnalytics: React.FC = () => {
           const recentPaymentsWithUsers = await Promise.all(
             payments.slice(0, 5).map(async (payment) => {
               const { data: profile } = await supabase
-                .from('profiles')
+                .from('Profiles')
                 .select('email')
                 .eq('user_id', payment.user_id)
                 .single();
