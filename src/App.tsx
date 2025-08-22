@@ -20,6 +20,8 @@ import { Dashboard } from './pages/Dashboard';
 import { Contact } from './pages/Contact';
 import { Portfolio } from './pages/Portfolio';
 import About from './pages/About';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
 import AuthCallback from './pages/auth/Callback';
 import { AdminLogin } from './pages/admin/AdminLogin';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
@@ -48,6 +50,8 @@ function App() {
                 <CourseContent />
               </ProtectedRoute>
             } />
+            <Route path="/terms" element={<Layout><Terms /></Layout>} />
+            <Route path="/privacy-policy" element={<Layout><Privacy /></Layout>} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/reset-password" element={<ResetPassword />} />

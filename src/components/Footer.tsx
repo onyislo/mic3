@@ -11,6 +11,7 @@ export const Footer: React.FC = () => {
     { name: 'About Us', path: '/about' },
     { name: 'Portfolio', path: '/portfolio' },
     { name: 'Contact', path: '/contact' },
+    { name: 'Terms', path: '/terms' },
     { name: 'Login', path: '/login' },
     { name: 'Register', path: '/register' },
   ];
@@ -135,12 +136,12 @@ export const Footer: React.FC = () => {
             </div>
             <div className="flex space-x-4 text-xs">
               <Link to="/privacy-policy" className="text-text-muted hover:text-primary transition-colors">
-                Privacy
+                Privacy Policy
               </Link>
-              <Link to="/terms-of-service" className="text-text-muted hover:text-primary transition-colors">
-                Terms
+              <Link to="/terms" className="text-text-muted hover:text-primary transition-colors">
+                Terms & Conditions
               </Link>
-              <Link to="/cookie-policy" className="text-text-muted hover:text-primary transition-colors">
+              <Link to="/privacy-policy#cookies" className="text-text-muted hover:text-primary transition-colors">
                 Cookies
               </Link>
             </div>

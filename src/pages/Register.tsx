@@ -175,13 +175,13 @@ export const Register: React.FC = () => {
             />
             <label htmlFor="terms" className="ml-2 block text-sm text-text-muted">
               I agree to the{' '}
-              <a href="#" className="text-primary hover:text-primary-dark transition-colors">
+              <Link to="/terms" className="text-primary hover:text-primary-dark transition-colors">
                 Terms of Service
-              </a>{' '}
+              </Link>{' '}
               and{' '}
-              <a href="#" className="text-primary hover:text-primary-dark transition-colors">
+              <Link to="/privacy-policy" className="text-primary hover:text-primary-dark transition-colors">
                 Privacy Policy
-              </a>
+              </Link>
             </label>
           </div>
 
