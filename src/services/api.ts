@@ -96,7 +96,30 @@ class ApiClient {
   }
 
   async getCourseContent(id: string) {
-    return this.get(`/courses/${id}/content`);
+    try {
+      // First try using direct API endpoint
+      return await this.get(`/courses/${id}/content`);
+    } catch (error) {
+      // Fallback to Supabase
+      console.log('Falling back to Supabase for course content');
+      const { getCourseContent } = await import('./courseContentService');
+      const sections = await getCourseContent(id);
+      
+      // We need to transform this to match the CourseContent structure expected by components
+      if (sections && sections.length > 0) {
+        const { getCourseById } = await import('./courseService');
+        const courseData = await getCourseById(id);
+        
+        return {
+          id: id,
+          title: courseData ? courseData["Course Title"] : "Course",
+          sections: sections,
+          progress: 0 // This would normally be calculated from user progress
+        };
+      }
+      
+      return null;
+    }
   }
 
   // Student progress tracking methods

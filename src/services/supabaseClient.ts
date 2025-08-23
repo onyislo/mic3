@@ -7,7 +7,23 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Missing Supabase environment variables');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Create client with optimized options for larger file uploads
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+  global: {
+    // Increase timeout for larger files
+    fetch: (url, options) => {
+      return fetch(url, {
+        ...options,
+        // 10 minute timeout instead of default 30s
+        signal: AbortSignal.timeout(10 * 60 * 1000),
+      });
+    },
+  },
+});
 
 // Import centralized types
 import { 

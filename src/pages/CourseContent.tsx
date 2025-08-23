@@ -3,6 +3,7 @@ import { useParams, Navigate } from 'react-router-dom';
 import { Play, FileText, BookOpen, CheckCircle, Download, ExternalLink, Lock } from 'lucide-react';
 import { api } from '../services';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../services/supabaseClient';
 
 interface ContentItem {
   id: string;
@@ -138,11 +139,81 @@ export const CourseContent: React.FC = () => {
     const fetchCourseContent = async () => {
       try {
         if (slug) {
-          // Extract course ID from slug or use slug directly
-          const courseId = '1'; // In real app, you'd get this from course data
-          const data = await api.getCourseContent(courseId);
+          // First fetch the course to get its ID
+          const { data: courseData } = await supabase
+            .from('Courses')
+            .select('id, "Course Title"')
+            .eq('slug', slug)
+            .single();
+            
+          if (!courseData) {
+            throw new Error('Course not found');
+          }
+          
           // Type assertion since we know the structure of the returned data
-          setContent(data as CourseContent);
+          const courseId = (courseData as any).id;
+          
+          // Now fetch the course content using the API
+          const data = await api.getCourseContent(courseId);
+          
+          // If we have data from API, use it
+          if (data && Object.keys(data).length > 0) {
+            setContent(data as CourseContent);
+          } else {
+            // Otherwise, try to construct it from Supabase directly
+            const { data: contentData } = await supabase
+              .from('Course_Content')
+              .select('*')
+              .eq('course_id', courseId)
+              .order('Order', { ascending: true });
+              
+            if (contentData && contentData.length > 0) {
+              // Transform the data to match our CourseContent structure
+              const sections: { [key: number]: CourseSection } = {};
+              
+              // Group items by module
+              contentData.forEach(item => {
+                const moduleNum = item.Module || 0;
+                
+                if (!sections[moduleNum]) {
+                  sections[moduleNum] = {
+                    id: `section-${moduleNum}`,
+                    title: item.section_title || `Section ${moduleNum + 1}`,
+                    order: moduleNum,
+                    items: []
+                  };
+                }
+                
+                sections[moduleNum].items.push({
+                  id: item.id,
+                  title: item.Title,
+                  type: item.content_type,
+                  url: item.media_url,
+                  duration: item.duration,
+                  fileSize: item.file_size,
+                  isCompleted: false, // Will need to be checked against user progress
+                  order: item.Order
+                });
+              });
+              
+              // Convert the object to an array
+              const sectionsArray = Object.values(sections).sort((a, b) => a.order - b.order);
+              
+              // Create content object
+              const courseContent: CourseContent = {
+                id: courseId,
+                title: (courseData as any)["Course Title"] || "Course",
+                sections: sectionsArray,
+                progress: 0 // Will be calculated from user progress
+              };
+              
+              setContent(courseContent);
+            } else {
+              // If no content in database, use mock data as fallback
+              console.warn("No content found for course, using mock data");
+              setContent(mockContent);
+            }
+          }
         }
       } catch (error) {
         // Fall back to mock data

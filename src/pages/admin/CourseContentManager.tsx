@@ -1,25 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Play, FileText, Upload, Edit, Trash2, X, Plus, MoveUp, MoveDown, Video } from 'lucide-react';
-
-// Define interfaces for our content types
-interface ContentSection {
-  id: string;
-  title: string;
-  order: number;
-  items: ContentItem[];
-}
-
-interface ContentItem {
-  id: string;
-  title: string;
-  type: 'video' | 'pdf' | 'text';
-  url?: string;
-  fileSize?: number;
-  duration?: number;
-  order: number;
-  isPublished: boolean;
-}
+import { supabase } from '../../services/supabaseClient';
+import { uploadCourseContent } from '../../services/storageService';
+import { ContentSection, ContentItem, getCourseContent, saveCourseContent } from '../../services/courseContentService';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface Course {
   id: string;
@@ -30,8 +15,9 @@ interface Course {
 export const CourseContentManager: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   
-  // Mock data for the course - would be fetched from Supabase in a real implementation
+  // Course data state
   const [course, setCourse] = useState<Course>({
     id: courseId || '',
     title: 'Loading...',
@@ -40,9 +26,12 @@ export const CourseContentManager: React.FC = () => {
   
   // State for content sections
   const [sections, setSections] = useState<ContentSection[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [savingChanges, setSavingChanges] = useState(false);
   
   // State for file uploads
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   
   // State for active section for adding content
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
@@ -57,74 +46,59 @@ export const CourseContentManager: React.FC = () => {
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   
-  // Mock fetch course data
+  // Check authentication first
   useEffect(() => {
-    // This would be an API call to Supabase in a real implementation
-    if (courseId) {
-      // Mock data
-      const mockCourse = {
-        id: courseId,
-        title: 'React Masterclass',
-        description: 'Learn React from beginner to advanced level'
-      };
-      
-      const mockSections = [
-        {
-          id: '1',
-          title: 'Introduction',
-          order: 0,
-          items: [
-            {
-              id: '101',
-              title: 'Welcome to the Course',
-              type: 'video' as const,
-              url: 'https://example.com/video1.mp4',
-              duration: 360, // 6 minutes
-              fileSize: 15000000, // 15 MB
-              order: 0,
-              isPublished: true
-            }
-          ]
-        },
-        {
-          id: '2',
-          title: 'Getting Started with React',
-          order: 1,
-          items: [
-            {
-              id: '201',
-              title: 'Setting Up Your Environment',
-              type: 'video' as const,
-              url: 'https://example.com/video2.mp4',
-              duration: 720, // 12 minutes
-              fileSize: 25000000, // 25 MB
-              order: 0,
-              isPublished: true
-            },
-            {
-              id: '202',
-              title: 'React Fundamentals Guide',
-              type: 'pdf' as const,
-              url: 'https://example.com/guide.pdf',
-              fileSize: 2000000, // 2 MB
-              order: 1,
-              isPublished: true
-            }
-          ]
-        }
-      ];
-      
-      setCourse(mockCourse);
-      setSections(mockSections);
+    if (!isAuthenticated) {
+      navigate('/admin/login', { replace: true });
     }
-  }, [courseId]);
+  }, [isAuthenticated, navigate]);
+
+  // Fetch course data and content
+  useEffect(() => {
+    const fetchCourseAndContent = async () => {
+      if (courseId && isAuthenticated) {
+        setLoading(true);
+        try {
+          // Fetch course details
+          const { data: courseData, error: courseError } = await supabase
+            .from('Courses')
+            .select('*')
+            .eq('id', courseId)
+            .single();
+          
+          if (courseError) {
+            console.error('Error fetching course:', courseError);
+            return;
+          }
+          
+          const course = {
+            id: courseId,
+            title: courseData["Course Title"] || 'Untitled Course',
+            description: courseData["Description"] || ''
+          };
+          
+          setCourse(course);
+          
+          // Fetch course content
+          const contentSections = await getCourseContent(courseId);
+          setSections(contentSections);
+        } catch (error) {
+          console.error('Error fetching course data:', error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    
+    fetchCourseAndContent();
+  }, [courseId, isAuthenticated, navigate]);
   
   // Handler for adding a new section
   const handleAddSection = (e: React.FormEvent) => {
     e.preventDefault();
     
     const newSection: ContentSection = {
-      id: Date.now().toString(),
+      id: `section-${Date.now()}`,
       title: newSectionTitle,
       order: sections.length,
       items: []
@@ -133,12 +107,44 @@ export const CourseContentManager: React.FC = () => {
     setSections([...sections, newSection]);
     setNewSectionTitle('');
     setShowNewSectionForm(false);
+    
+    // If we have a courseId, save the new section to the database
+    if (courseId) {
+      saveCourseContent(courseId, [...sections, newSection])
+        .catch(error => console.error('Error saving new section:', error));
+    }
   };
   
   // Handler for deleting a section
-  const handleDeleteSection = (sectionId: string) => {
+  const handleDeleteSection = async (sectionId: string) => {
     if (confirm('Are you sure you want to delete this section? All content will be lost.')) {
-      setSections(sections.filter(section => section.id !== sectionId));
+      // Find the section to get its items for deletion
+      const sectionToDelete = sections.find(s => s.id === sectionId);
+      const updatedSections = sections.filter(section => section.id !== sectionId);
+      
+      setSections(updatedSections);
+      
+      // Save the changes to the database
+      if (courseId) {
+        try {
+          // First delete any media files from storage
+          if (sectionToDelete) {
+            for (const item of sectionToDelete.items) {
+              if (item.url && (item.type === 'video' || item.type === 'pdf')) {
+                // Here you would delete the file from storage
+                // This is a more complex operation that requires tracking the storage paths
+                console.log(`Should delete file: ${item.url}`);
+              }
+            }
+          }
+          
+          // Then update the database to remove the section and its items
+          await saveCourseContent(courseId, updatedSections);
+        } catch (error) {
+          console.error('Error deleting section:', error);
+          alert('Failed to delete section. Please try again.');
+        }
+      }
     }
   };
   
@@ -149,21 +155,30 @@ export const CourseContentManager: React.FC = () => {
     setUploading(true);
     
     try {
-      // In a real implementation, this would upload the file to storage
-      // and get back a URL
       let fileUrl = '';
       let fileSize = 0;
       let duration = 0;
       
-      if (selectedFile) {
-        // Mock upload - in real implementation this would use Supabase storage
-        console.log(`Uploading ${selectedFile.name}...`);
-        fileUrl = `https://example.com/${selectedFile.name}`;
-        fileSize = selectedFile.size;
+      if (selectedFile && courseId) {
+        setUploadProgress(0);
         
-        // Mock video duration calculation
-        if (newItem.type === 'video') {
-          duration = Math.floor(Math.random() * 1200) + 300; // Random duration between 5-25 minutes
+        // Actually upload file to Supabase storage
+        console.log(`Uploading ${selectedFile.name} to Supabase...`);
+        
+        // Use the uploadCourseContent function to upload the file
+        const uploadResult = await uploadCourseContent(
+          selectedFile,
+          newItem.type,
+          courseId
+        );
+        
+        if (uploadResult.url) {
+          fileUrl = uploadResult.url;
+          fileSize = uploadResult.fileSize;
+          duration = uploadResult.duration || 0;
+          console.log('File uploaded successfully:', fileUrl);
+        } else {
+          throw new Error('Failed to upload file to storage');
         }
       }
       
@@ -173,7 +188,7 @@ export const CourseContentManager: React.FC = () => {
         const updatedSections = [...sections];
         
         const newContentItem: ContentItem = {
-          id: Date.now().toString(),
+          id: `temp-${Date.now()}`, // Will be replaced with UUID when saved to database
           title: newItem.title,
           type: newItem.type,
           url: fileUrl,
@@ -189,6 +204,13 @@ export const CourseContentManager: React.FC = () => {
         ];
         
         setSections(updatedSections);
+        
+        // Save to database
+        if (courseId) {
+          console.log('Saving content to database...');
+          await saveCourseContent(courseId, updatedSections);
+          console.log('Content saved successfully');
+        }
       }
       
       // Reset the form
@@ -198,24 +220,49 @@ export const CourseContentManager: React.FC = () => {
       
     } catch (error) {
       console.error('Error uploading file:', error);
-      alert('Failed to upload file. Please try again.');
+      // Show more detailed error
+      if (error instanceof Error) {
+        alert(`Upload failed: ${error.message}`);
+      } else {
+        alert('Failed to upload file. Please try again.');
+      }
     } finally {
       setUploading(false);
     }
   };
   
   // Handler for deleting an item
-  const handleDeleteItem = (sectionId: string, itemId: string) => {
+  const handleDeleteItem = async (sectionId: string, itemId: string) => {
     if (confirm('Are you sure you want to delete this item?')) {
       const sectionIndex = sections.findIndex(s => s.id === sectionId);
       
       if (sectionIndex !== -1) {
+        // Find the item to be deleted
+        const itemToDelete = sections[sectionIndex].items.find(item => item.id === itemId);
+        
+        // Update the local state
         const updatedSections = [...sections];
         updatedSections[sectionIndex].items = updatedSections[sectionIndex].items.filter(
           item => item.id !== itemId
         );
         
         setSections(updatedSections);
+        
+        // Save changes to the database
+        if (courseId) {
+          try {
+            // If there's a URL, attempt to delete the file from storage
+            if (itemToDelete?.url && (itemToDelete.type === 'video' || itemToDelete.type === 'pdf')) {
+              // Ideally would delete from storage here
+              console.log(`Should delete file: ${itemToDelete.url}`);
+            }
+            
+            await saveCourseContent(courseId, updatedSections);
+          } catch (error) {
+            console.error('Error deleting item:', error);
+            alert('Failed to delete item. Please try again.');
+          }
+        }
       }
     }
   };
@@ -242,7 +289,7 @@ export const CourseContentManager: React.FC = () => {
   };
   
   // Handler for reordering sections
-  const handleMoveSection = (sectionId: string, direction: 'up' | 'down') => {
+  const handleMoveSection = async (sectionId: string, direction: 'up' | 'down') => {
     const sectionIndex = sections.findIndex(s => s.id === sectionId);
     
     if (
@@ -264,11 +311,20 @@ export const CourseContentManager: React.FC = () => {
       });
       
       setSections(updatedSections);
+      
+      // Save changes to database
+      if (courseId) {
+        try {
+          await saveCourseContent(courseId, updatedSections);
+        } catch (error) {
+          console.error('Error reordering sections:', error);
+        }
+      }
     }
   };
   
   // Handler for reordering items within a section
-  const handleMoveItem = (sectionId: string, itemId: string, direction: 'up' | 'down') => {
+  const handleMoveItem = async (sectionId: string, itemId: string, direction: 'up' | 'down') => {
     const sectionIndex = sections.findIndex(s => s.id === sectionId);
     
     if (sectionIndex !== -1) {
@@ -293,12 +349,21 @@ export const CourseContentManager: React.FC = () => {
         });
         
         setSections(updatedSections);
+        
+        // Save changes to database
+        if (courseId) {
+          try {
+            await saveCourseContent(courseId, updatedSections);
+          } catch (error) {
+            console.error('Error reordering items:', error);
+          }
+        }
       }
     }
   };
   
   // Handler for toggling item publish status
-  const handleTogglePublish = (sectionId: string, itemId: string) => {
+  const handleTogglePublish = async (sectionId: string, itemId: string) => {
     const sectionIndex = sections.findIndex(s => s.id === sectionId);
     
     if (sectionIndex !== -1) {
@@ -310,16 +375,42 @@ export const CourseContentManager: React.FC = () => {
           !updatedSections[sectionIndex].items[itemIndex].isPublished;
         
         setSections(updatedSections);
+        
+        // Save changes to database
+        if (courseId) {
+          try {
+            await saveCourseContent(courseId, updatedSections);
+          } catch (error) {
+            console.error('Error toggling publish status:', error);
+          }
+        }
       }
     }
   };
   
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-bg-dark">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-red-600 border-t-transparent border-solid rounded-full mx-auto mb-4 animate-spin"></div>
+          <p className="text-lg text-gray-600">Loading course content...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-red-900">{course.title}</h2>
           <p className="text-red-600">Course Content Management</p>
+          {!user && (
+            <p className="text-yellow-600 mt-2">
+              ⚠️ You appear to be logged out. Content uploads may fail. Please refresh the page or log in again.
+            </p>
+          )}
         </div>
         <div className="flex space-x-3">
           <button
@@ -613,7 +704,15 @@ export const CourseContentManager: React.FC = () => {
                       disabled={uploading}
                       className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors disabled:bg-gray-400"
                     >
-                      {uploading ? 'Uploading...' : 'Add Content'}
+                      {uploading ? (
+                        <span className="flex items-center">
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Uploading...
+                        </span>
+                      ) : 'Add Content'}
                     </button>
                     <button
                       type="button"
@@ -676,8 +775,29 @@ export const CourseContentManager: React.FC = () => {
       
       {/* Save Changes Button */}
       <div className="flex justify-end">
-        <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors">
-          Save All Changes
+        <button 
+          onClick={async () => {
+            if (!courseId) return;
+            
+            setSavingChanges(true);
+            try {
+              const success = await saveCourseContent(courseId, sections);
+              if (success) {
+                alert('Course content saved successfully!');
+              } else {
+                alert('Failed to save course content. Please try again.');
+              }
+            } catch (error) {
+              console.error('Error saving course content:', error);
+              alert('An error occurred while saving content. Please try again.');
+            } finally {
+              setSavingChanges(false);
+            }
+          }} 
+          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors"
+          disabled={savingChanges}
+        >
+          {savingChanges ? 'Saving...' : 'Save All Changes'}
         </button>
       </div>
     </div>
