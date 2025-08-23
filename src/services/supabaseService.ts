@@ -68,9 +68,10 @@ export const getCourseById = async (courseId: string): Promise<Course | null> =>
 
 // Course Progress Services
 export const getUserCourseProgress = async (userId: string): Promise<CourseProgress[]> => {
+  console.log('Fetching course progress for userId:', userId);
   const { data, error } = await supabase
     .from('course_progress')
-    .select('*, courses(*)')
+    .select('*')
     .eq('user_id', userId);
 
   if (error) {

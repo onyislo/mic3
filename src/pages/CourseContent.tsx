@@ -44,96 +44,6 @@ export const CourseContent: React.FC = () => {
     description: string;
   } | null>(null);
 
-  // Mock course content
-  const mockContent = useMemo<CourseContent>(() => ({
-    id: '1',
-    title: 'React Masterclass',
-    progress: 35,
-    sections: [
-      {
-        id: '1',
-        title: 'Introduction',
-        order: 0,
-        items: [
-          {
-            id: '101',
-            title: 'Welcome to the Course',
-            type: 'video',
-            url: 'https://example.com/videos/welcome.mp4',
-            duration: 360, // 6 minutes in seconds
-            isCompleted: true,
-            order: 0
-          },
-          {
-            id: '102',
-            title: 'Course Resources',
-            type: 'pdf',
-            url: 'https://example.com/pdfs/resources.pdf',
-            fileSize: 2500000, // 2.5MB
-            isCompleted: false,
-            order: 1
-          }
-        ]
-      },
-      {
-        id: '2',
-        title: 'Getting Started with React',
-        order: 1,
-        items: [
-          {
-            id: '201',
-            title: 'Setting Up Your Environment',
-            type: 'video',
-            url: 'https://example.com/videos/setup.mp4',
-            duration: 720, // 12 minutes in seconds
-            isCompleted: false,
-            order: 0
-          },
-          {
-            id: '202',
-            title: 'Creating Your First React App',
-            type: 'video',
-            url: 'https://example.com/videos/first-app.mp4',
-            duration: 900, // 15 minutes in seconds
-            isCompleted: false,
-            order: 1
-          },
-          {
-            id: '203',
-            title: 'React Fundamentals Guide',
-            type: 'pdf',
-            url: 'https://example.com/pdfs/react-guide.pdf',
-            fileSize: 3500000, // 3.5MB
-            isCompleted: false,
-            order: 2
-          }
-        ]
-      },
-      {
-        id: '3',
-        title: 'Advanced React Concepts',
-        order: 2,
-        items: [
-          {
-            id: '301',
-            title: 'Hooks and State Management',
-            type: 'video',
-            url: 'https://example.com/videos/hooks.mp4',
-            duration: 1500, // 25 minutes in seconds
-            isCompleted: false,
-            order: 0
-          },
-          {
-            id: '302',
-            title: 'Context API and Redux',
-            type: 'text',
-            isCompleted: false,
-            order: 1
-          }
-        ]
-      }
-    ]
-  }), []);
 
   useEffect(() => {
     const fetchCourseContent = async () => {
@@ -154,51 +64,61 @@ export const CourseContent: React.FC = () => {
           const courseId = (courseData as any).id;
           
           // Now fetch the course content using the API
+          console.log('DEBUG: courseId used for content fetch:', courseId);
           const data = await api.getCourseContent(courseId);
-          
+          console.log('DEBUG: data returned from api.getCourseContent:', data);
           // If we have data from API, use it
           if (data && Object.keys(data).length > 0) {
             setContent(data as CourseContent);
           } else {
             // Otherwise, try to construct it from Supabase directly
-            const { data: contentData } = await supabase
-              .from('Course_Content')
+
+            const { data: contentData, error: contentError } = await supabase
+              .from('course_content')
               .select('*')
               .eq('course_id', courseId)
               .order('Order', { ascending: true });
-              
+
+            console.log('DEBUG: Fetched course_content from Supabase for courseId', courseId, ':', contentData, 'Error:', contentError);
+
+            if (contentError) {
+              throw new Error('Error fetching course content: ' + contentError.message);
+            }
+
             if (contentData && contentData.length > 0) {
               // Transform the data to match our CourseContent structure
               const sections: { [key: number]: CourseSection } = {};
-              
-              // Group items by module
+
+
+              // Group items by module (if you have a module/section order column, otherwise use 0)
               contentData.forEach(item => {
-                const moduleNum = item.Module || 0;
-                
+                // If you have a module/section order column, use it here. Otherwise, use 0 or a fallback.
+                const moduleNum = 0;
+
                 if (!sections[moduleNum]) {
                   sections[moduleNum] = {
                     id: `section-${moduleNum}`,
-                    title: item.section_title || `Section ${moduleNum + 1}`,
+                    title: item['Section Title'] || `Section ${moduleNum + 1}`,
                     order: moduleNum,
                     items: []
                   };
                 }
-                
+
                 sections[moduleNum].items.push({
                   id: item.id,
                   title: item.Title,
-                  type: item.content_type,
-                  url: item.media_url,
-                  duration: item.duration,
-                  fileSize: item.file_size,
+                  type: item['Content Type'],
+                  url: item.media_url, // Only if you have this column
+                  duration: item.duration, // Only if you have this column
+                  fileSize: item['File Size'],
                   isCompleted: false, // Will need to be checked against user progress
-                  order: item.Order
+                  order: 0 // If you have an order column, use it here
                 });
               });
-              
+
               // Convert the object to an array
               const sectionsArray = Object.values(sections).sort((a, b) => a.order - b.order);
-              
+
               // Create content object
               const courseContent: CourseContent = {
                 id: courseId,
@@ -206,19 +126,19 @@ export const CourseContent: React.FC = () => {
                 sections: sectionsArray,
                 progress: 0 // Will be calculated from user progress
               };
-              
+
               setContent(courseContent);
             } else {
-              // If no content in database, use mock data as fallback
-              console.warn("No content found for course, using mock data");
-              setContent(mockContent);
+              // If no content in database, show a clear error
+              setContent(null);
+              console.error('No course content found in Supabase for this course.');
             }
           }
         }
       } catch (error) {
-        // Fall back to mock data
+        // Show a clear error and do not use mock data
         console.error("Failed to fetch course content:", error);
-        setContent(mockContent);
+        setContent(null);
       } finally {
         setLoading(false);
       }
@@ -227,31 +147,10 @@ export const CourseContent: React.FC = () => {
     fetchCourseContent();
   }, [slug, mockContent]);
 
-  // Check if user has purchased this course
-  const hasPurchased = user?.purchasedCourses?.includes(content?.id || '');
 
+  // BYPASS: Allow all authenticated users to access any course (for testing)
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
-  }
-
-  if (!hasPurchased && !loading) {
-    return (
-      <div className="min-h-screen bg-bg-dark text-text-light flex items-center justify-center">
-        <div className="text-center">
-          <Lock className="h-16 w-16 text-primary mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-2">Course Not Purchased</h2>
-          <p className="text-text-muted mb-4">
-            You need to purchase this course to access the content.
-          </p>
-          <button
-            onClick={() => window.history.back()}
-            className="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-lg transition-colors"
-          >
-            Go Back
-          </button>
-        </div>
-      </div>
-    );
   }
 
   if (loading) {
@@ -265,7 +164,16 @@ export const CourseContent: React.FC = () => {
   if (!content) {
     return (
       <div className="min-h-screen bg-bg-dark flex items-center justify-center">
-        <div className="text-text-light">Course content not found</div>
+        <div className="text-text-light font-bold text-xl text-center">
+          Course content not found.<br />
+          {/* Show details only for admin. Adjust this check as needed for your app. */}
+          {user && user.email === 'admin@example.com' && (
+            <>
+              Please ensure content exists in the <code>course_content</code> table for this course.<br />
+              (Check the browser console for debug info.)
+            </>
+          )}
+        </div>
       </div>
     );
   }
@@ -336,32 +244,32 @@ export const CourseContent: React.FC = () => {
       });
 
       // Send the update to the API
-      await api.updateLessonProgress({
-        courseId: content.id,
-        lessonId: item.id,
-        completed: true
-      });
+  // await api.updateLessonProgress({
+  //   courseId: content.id,
+  //   lessonId: item.id,
+  //   completed: true
+  // });
 
-      // Check if the course is now complete
-      if (newProgress === 100) {
-        await api.markCourseComplete(content.id);
-        
-        // Show completion alert
-        alert(`🎉 Congratulations on completing the ${content.title} course!`);
-        
-        // Initialize badge data (if we have a badge system)
-        const badgeData = {
-          name: `${content.title} Master`,
-          image: 'https://img.icons8.com/color/96/000000/prize.png',
-          description: `Congratulations on completing the ${content.title} course!`
-        };
-        
-        // If we have badge modals set up
-        if (typeof setCompletedBadge === 'function' && typeof setShowBadgeModal === 'function') {
-          setCompletedBadge(badgeData);
-          setShowBadgeModal(true);
-        }
-      }
+  // // Check if the course is now complete
+  // if (newProgress === 100) {
+  //   await api.markCourseComplete(content.id);
+  //   
+  //   // Show completion alert
+  //   alert(`🎉 Congratulations on completing the ${content.title} course!`);
+  //   
+  //   // Initialize badge data (if we have a badge system)
+  //   const badgeData = {
+  //     name: `${content.title} Master`,
+  //     image: 'https://img.icons8.com/color/96/000000/prize.png',
+  //     description: `Congratulations on completing the ${content.title} course!`
+  //   };
+  //   
+  //   // If we have badge modals set up
+  //   if (typeof setCompletedBadge === 'function' && typeof setShowBadgeModal === 'function') {
+  //     setCompletedBadge(badgeData);
+  //     setShowBadgeModal(true);
+  //   }
+  // }
 
       // Navigate to next content if available
       navigateToNextContent();

@@ -1,15 +1,14 @@
 export interface Course {
   id: string;
-  "Course Title": string;
-  "Description"?: string | null;
-  "Instructor"?: string | null;
-  "Price"?: number;
+  ["Course Title"]: string;
+  ["Description"]?: string | null;
+  ["Instructor"]?: string | null;
+  ["Price"]?: number;
   duration?: string;
   level?: 'beginner' | 'intermediate' | 'advanced';
-  image_url?: string;
+  ["Course Image"]?: string | null;
   category?: string;
   status?: 'active' | 'draft' | 'archived';
-  // slug removed as it doesn't exist in the database
   created_at?: string;
   updated_at?: string;
 }

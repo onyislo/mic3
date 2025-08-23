@@ -53,7 +53,7 @@ export const CourseDetail: React.FC = () => {
               students: 0, // Default value since it's not in our database yet
               rating: 5.0, // Default value since it's not in our database yet
               instructor: dbCourse["Instructor"] || "Expert Instructor",
-              image: dbCourse.image_url || "",
+              image: dbCourse["Course Image"] || "",
               category: dbCourse.category || "General",
               lessons: 10, // Default value
               // Default values for arrays since they're not in our database yet
@@ -77,25 +77,7 @@ export const CourseDetail: React.FC = () => {
         }
       } catch (fetchError) {
         console.error('Error fetching course:', fetchError);
-        // Fall back to mock data
-        const mockCourse: DisplayCourse = {
-          id: '1',
-          title: 'React Masterclass',
-          description: 'Learn React from beginner to advanced level with real-world projects.',
-          fullDescription: 'This comprehensive React course will take you from a complete beginner to an advanced React developer.',
-          price: 2500,
-          duration: '12 weeks',
-          students: 1200,
-          rating: 4.8,
-          instructor: 'John Doe',
-          image: '',
-          category: 'Frontend',
-          lessons: 45,
-          features: ['Lifetime access to course content', 'Certificate of completion'],
-          requirements: ['Basic knowledge of HTML, CSS, and JavaScript'],
-          whatYoullLearn: ['React fundamentals and JSX', 'Component lifecycle and hooks'],
-        };
-        setCourse(mockCourse);
+        setCourse(null);
       } finally {
         setLoading(false);
       }

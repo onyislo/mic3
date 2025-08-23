@@ -9,7 +9,7 @@ export interface CourseInput {
   instructor: string;
   duration?: string;
   level?: 'beginner' | 'intermediate' | 'advanced';
-  image_url?: string;
+  "Course Image"?: string;
   category?: string;
   status?: 'active' | 'draft' | 'archived';
 }
@@ -106,7 +106,7 @@ export const createCourse = async (courseData: CourseInput): Promise<Course | nu
         "Description": description, // Explicitly convert to string
         "duration": courseData.duration || '4 weeks',
         "level": courseData.level || 'beginner',
-        "image_url": courseData.image_url || '',
+  "Course Image": courseData["Course Image"] || '',
         "category": courseData.category || 'general',
         "Price": price, // Use the validated price value
         "status": courseData.status || 'draft'
@@ -172,8 +172,8 @@ export const updateCourse = async (id: string, courseData: Partial<CourseInput>)
       updates["level"] = courseData.level;
     }
 
-    if (courseData.image_url) {
-      updates["image_url"] = courseData.image_url;
+    if (courseData["Course Image"]) {
+      updates["Course Image"] = courseData["Course Image"];
     }
 
     if (courseData.category) {

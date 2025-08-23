@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, User, Award, Clock, Play, TrendingUp, Search, ChevronRight, Medal, Gift, Zap, Gift as GiftIcon, Bookmark, Bell, Star, Tag, FileText, UserCheck } from 'lucide-react';
+import { BookOpen, User, Clock, Play, TrendingUp, Search, ChevronRight, Medal, Zap, Star, FileText } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   getUserCourseProgress, 
   getUserBadges, 
-  getUserPayments, 
   getCourses, 
   getCourseById 
 } from '../services/supabaseService';
-import { Course, CourseProgress, Badge, UserBadge } from '../services/supabaseClient';
 
 interface Course {
   id: string;
@@ -25,171 +23,227 @@ interface Course {
   category: string;
 }
 
+interface UserCourse {
+  id: string;
+  slug: string;
+  title: string;
+  progress: number;
+  lastAccessed: string;
+  image: string;
+  totalLessons: number;
+  completedLessons: number;
+  category: string;
+  instructor: string;
+  badgeEarned: Badge | null;
+}
+
+interface Badge {
+  name: string;
+  image: string;
+  earnedDate: string;
+}
+
+interface Activity {
+  type: string;
+  title: string;
+  course: string;
+  date: string;
+  icon: React.ElementType;
+}
+
+interface Stat {
+  icon: React.ElementType;
+  label: string;
+  value: number | string;
+  color: string;
+}
+
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
-  const [recommendedCourses, setRecommendedCourses] = useState<Course[]>([]);
+  // const [recommendedCourses, setRecommendedCourses] = useState<Course[]>([]);
+  const [purchasedCourses, setPurchasedCourses] = useState<UserCourse[]>([]);
+  const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [showAllCourses, setShowAllCourses] = useState(false);
+  const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
+  const [stats, setStats] = useState<Stat[]>([]);
   
-  // Mock data for purchased courses
-  const purchasedCourses = [
-    {
-      id: '1',
-      slug: 'react-masterclass',
-      title: 'React Masterclass',
-      progress: 65,
-      lastAccessed: '2 days ago',
-      image: 'https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg?auto=compress&cs=tinysrgb&w=400',
-      totalLessons: 45,
-      completedLessons: 29,
-      category: 'Frontend',
-      instructor: 'John Doe',
-      badgeEarned: null,
-    },
-    {
-      id: '2',
-      slug: 'nodejs-backend',
-      title: 'Node.js Backend Development',
-      progress: 30,
-      lastAccessed: '1 week ago',
-      image: 'https://images.pexels.com/photos/1181673/pexels-photo-1181673.jpeg?auto=compress&cs=tinysrgb&w=400',
-      totalLessons: 38,
-      completedLessons: 11,
-      category: 'Backend',
-      instructor: 'Jane Smith',
-      badgeEarned: null,
-    },
-    {
-      id: '3',
-      slug: 'javascript-fundamentals',
-      title: 'JavaScript Fundamentals',
-      progress: 100,
-      lastAccessed: '1 month ago',
-      image: 'https://images.pexels.com/photos/4164418/pexels-photo-4164418.jpeg?auto=compress&cs=tinysrgb&w=400',
-      totalLessons: 32,
-      completedLessons: 32,
-      category: 'Programming',
-      instructor: 'Alex Johnson',
-      badgeEarned: {
-        name: 'JavaScript Master',
-        image: 'https://img.icons8.com/color/96/000000/javascript--v1.png',
-        earnedDate: '2025-07-15',
-      },
-    },
-  ];
-
-  // Mock data for available courses
-  const availableCourses = [
-    {
-      id: '4',
-      slug: 'python-for-beginners',
-      title: 'Python for Beginners',
-      description: 'Start your programming journey with Python, one of the most popular languages.',
-      price: 1800,
-      duration: '8 weeks',
-      students: 2300,
-      rating: 4.7,
-      instructor: 'Michael Scott',
-      image: 'https://images.pexels.com/photos/1181671/pexels-photo-1181671.jpeg?auto=compress&cs=tinysrgb&w=400',
-      category: 'Programming',
-    },
-    {
-      id: '5',
-      slug: 'web-design-fundamentals',
-      title: 'Web Design Fundamentals',
-      description: 'Learn the principles of modern web design and create beautiful websites.',
-      price: 2100,
-      duration: '6 weeks',
-      students: 1650,
-      rating: 4.8,
-      instructor: 'Emma Wilson',
-      image: 'https://images.pexels.com/photos/196646/pexels-photo-196646.jpeg?auto=compress&cs=tinysrgb&w=400',
-      category: 'Design',
-    },
-    {
-      id: '6',
-      slug: 'devops-ci-cd',
-      title: 'DevOps CI/CD Pipeline',
-      description: 'Master continuous integration and deployment with modern DevOps tools.',
-      price: 3200,
-      duration: '10 weeks',
-      students: 850,
-      rating: 4.9,
-      instructor: 'David Lee',
-      image: 'https://images.pexels.com/photos/1181675/pexels-photo-1181675.jpeg?auto=compress&cs=tinysrgb&w=400',
-      category: 'DevOps',
-    },
-  ];
-
-  const stats = [
-    {
-      icon: BookOpen,
-      label: 'Courses Enrolled',
-      value: purchasedCourses.length,
-      color: 'text-primary',
-    },
-    {
-      icon: Award,
-      label: 'Certificates Earned',
-      value: purchasedCourses.filter(course => course.badgeEarned).length,
-      color: 'text-yellow-400',
-    },
-    {
-      icon: Clock,
-      label: 'Hours Learned',
-      value: 47,
-      color: 'text-green-400',
-    },
-    {
-      icon: TrendingUp,
-      label: 'Average Progress',
-      value: purchasedCourses.length ? 
-        Math.round(purchasedCourses.reduce((acc, course) => acc + course.progress, 0) / purchasedCourses.length) + '%' : 
-        '0%',
-      color: 'text-blue-400',
-    },
-  ];
-
-  // Recent activity data
-  const recentActivities = [
-    {
-      type: 'lesson_completed',
-      title: 'JSX and Components',
-      course: 'React Masterclass',
-      date: '2 days ago',
-      icon: FileText,
-    },
-    {
-      type: 'course_started',
-      title: 'Node.js Backend Development',
-      course: 'Node.js Backend Development',
-      date: '1 week ago',
-      icon: Play,
-    },
-    {
-      type: 'certificate_earned',
-      title: 'JavaScript Master',
-      course: 'JavaScript Fundamentals',
-      date: '1 month ago',
-      icon: Award,
-    },
-    {
-      type: 'quiz_passed',
-      title: 'React Component Basics',
-      course: 'React Masterclass',
-      date: '3 days ago',
-      icon: UserCheck,
-    },
-  ];
-
-  // Get recommended courses
+  // Load user's courses and progress data from Supabase
   useEffect(() => {
-    // In a real app, you would fetch this from an API based on user preferences
-    setRecommendedCourses(availableCourses);
-    setLoading(false);
-  }, []);
+    const fetchData = async () => {
+      if (!user) return;
+      
+  try {
+        
+        // Fetch courses progress for the user
+        const progressData = await getUserCourseProgress(user.id);
+        
+        // Fetch all available courses
+        const allCourses = await getCourses();
+        
+        // Fetch user badges
+        const userBadgesData = await getUserBadges(user.id);
+        
+        // Create purchased courses array with progress information
+        const userCourses = await Promise.all(
+          progressData.map(async (progress) => {
+            // Get course details
+            const courseId = progress.course_id;
+            const course = await getCourseById(courseId);
+            if (!course || !course["Course Title"] || course["Course Title"].trim().toLowerCase() === 'untitled course') return null;
+            // Find badge if course is completed
+            const badgeData = userBadgesData.find(
+              (b) => b.userBadge.badge_id === course.badge_id
+            );
+            const badge = badgeData ? {
+              name: badgeData.badge.name,
+              image: badgeData.badge["Course Image"],
+              earnedDate: badgeData.userBadge.earned_date,
+            } : null;
+            return {
+              id: course.id,
+              slug: course.slug,
+              title: course["Course Title"],
+              progress: progress.progress_percentage || 0,
+              lastAccessed: getTimeAgo(progress.last_accessed_at),
+              image: course["Course Image"],
+              totalLessons: course.total_lessons || 0,
+              completedLessons: Math.round((progress.progress_percentage / 100) * (course.total_lessons || 0)),
+              category: course.category,
+              instructor: course.Instructor,
+              badgeEarned: badge,
+            };
+          })
+        );
+        // Filter out null values and courses with missing or 'Untitled Course' titles
+        const validUserCourses = userCourses
+          .filter((c): c is UserCourse => !!c && c.title && c.title.trim().toLowerCase() !== 'untitled course')
+          .sort((a, b) => new Date(b.lastAccessed).getTime() - new Date(a.lastAccessed).getTime());
+        setPurchasedCourses(validUserCourses);
+        // Set available courses (excluding purchased ones and untitled/mocked)
+        const userCourseIds = validUserCourses.map(c => c.id);
+        const availableCoursesList = allCourses
+          .filter(course => course["Course Title"] && course["Course Title"].trim().toLowerCase() !== 'untitled course' && !userCourseIds.includes(course.id))
+          .map(course => ({
+            id: course.id,
+            slug: course.slug,
+            title: course["Course Title"],
+            description: course.Description,
+            price: course.Price,
+            duration: course.Duration,
+            students: course.enrolled_count,
+            rating: course.average_rating,
+            instructor: course.Instructor,
+            image: course["Course Image"],
+            category: course.Category,
+          }));
+        setAvailableCourses(availableCoursesList);
+        // Set recommended courses (first few available courses)
+        
+        // Generate stats
+        const calculatedStats = [
+          {
+            icon: BookOpen,
+            label: 'Courses Enrolled',
+            value: validUserCourses.length,
+            color: 'text-primary',
+          },
+          // Certificates Earned stat removed
+          {
+            icon: Clock,
+            label: 'Hours Learned',
+            value: Math.round(validUserCourses.reduce((acc, course) => 
+              acc + (course.completedLessons * 15 / 60), 0)), // Assuming 15 min per lesson
+            color: 'text-green-400',
+          },
+          {
+            icon: TrendingUp,
+            label: 'Average Progress',
+            value: validUserCourses.length ? 
+              Math.round(validUserCourses.reduce((acc, course) => acc + course.progress, 0) / validUserCourses.length) + '%' : 
+              '0%',
+            color: 'text-blue-400',
+          },
+        ];
+        
+        setStats(calculatedStats);
+        
+        // Generate recent activities based on course progress
+        const activities = [];
+        
+        for (const course of validUserCourses) {
+          if (course.progress > 0) {
+            activities.push({
+              type: 'lesson_completed',
+              title: `${course.completedLessons} lessons completed`,
+              course: course.title,
+              date: course.lastAccessed,
+              icon: FileText,
+            });
+          } else {
+            activities.push({
+              type: 'course_started',
+              title: course.title,
+              course: course.title,
+              date: course.lastAccessed,
+              icon: Play,
+            });
+          }
+        }
+        
+        setRecentActivities(activities.slice(0, 4));
+        
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [user]);
+  
+  // Helper function for time formatting
+  function getTimeAgo(dateString: string): string {
+    if (!dateString) return 'Never';
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) {
+      return 'Just now';
+    }
+    
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes} ${diffInMinutes === 1 ? 'minute' : 'minutes'} ago`;
+    }
+    
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) {
+      return `${diffInHours} ${diffInHours === 1 ? 'hour' : 'hours'} ago`;
+    }
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) {
+      return `${diffInDays} ${diffInDays === 1 ? 'day' : 'days'} ago`;
+    }
+    
+    const diffInWeeks = Math.floor(diffInDays / 7);
+    if (diffInWeeks < 4) {
+      return `${diffInWeeks} ${diffInWeeks === 1 ? 'week' : 'weeks'} ago`;
+    }
+    
+    const diffInMonths = Math.floor(diffInDays / 30);
+    if (diffInMonths < 12) {
+      return `${diffInMonths} ${diffInMonths === 1 ? 'month' : 'months'} ago`;
+    }
+    
+    const diffInYears = Math.floor(diffInDays / 365);
+    return `${diffInYears} ${diffInYears === 1 ? 'year' : 'years'} ago`;
+  }
 
   // Filter courses by search term
   const filteredCourses = availableCourses.filter(course => 
@@ -320,7 +374,7 @@ export const Dashboard: React.FC = () => {
                               </div>
                               
                               <Link
-                                to={`/courses/${course.slug}/content`}
+                                to={`/courses/${course.id}/content`}
                                 className="inline-flex items-center bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg font-medium transition-colors"
                               >
                                 <Play className="h-4 w-4 mr-2" />
@@ -348,51 +402,47 @@ export const Dashboard: React.FC = () => {
                   )}
                 </div>
 
-                {/* Recommended Courses Section */}
+                {/* Available Courses Section (shows all available courses on dashboard) */}
                 <div className="mb-8">
                   <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold">Recommended for You</h2>
-                    <button 
-                      onClick={() => setActiveTab('find-courses')}
-                      className="text-primary hover:text-primary-dark flex items-center"
-                    >
-                      View all <ChevronRight className="h-4 w-4" />
-                    </button>
+                    <h2 className="text-2xl font-bold">Available Courses</h2>
+                    {/* View all button removed as requested */}
                   </div>
-                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {recommendedCourses.slice(0, 2).map((course) => (
-                      <div key={course.id} className="bg-bg-dark-light rounded-lg overflow-hidden border border-primary/20 hover:shadow-lg transition-shadow">
-                        <img
-                          src={course.image}
-                          alt={course.title}
-                          className="w-full h-40 object-cover"
-                        />
-                        <div className="p-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm text-primary font-medium">{course.category}</span>
-                            <div className="flex items-center">
-                              <Star className="h-4 w-4 text-yellow-400 mr-1" />
-                              <span className="text-sm text-text-muted">{course.rating}</span>
+                    {availableCourses.length === 0 ? (
+                      <div className="col-span-2 text-center text-text-muted">No available courses found.</div>
+                    ) : (
+                      availableCourses.slice(0, 4).map((course) => (
+                        <div key={course.id} className="bg-bg-dark-light rounded-lg overflow-hidden border border-primary/20 hover:shadow-lg transition-shadow">
+                          <img
+                            src={course.image}
+                            alt={course.title}
+                            className="w-full h-40 object-cover"
+                          />
+                          <div className="p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm text-primary font-medium">{course.category}</span>
+                              <div className="flex items-center">
+                                <Star className="h-4 w-4 text-yellow-400 mr-1" />
+                                <span className="text-sm text-text-muted">{course.rating}</span>
+                              </div>
                             </div>
+                            <h3 className="text-lg font-semibold mb-2">{course.title}</h3>
+                            <p className="text-text-muted text-sm mb-4 line-clamp-2">{course.description}</p>
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="text-primary font-semibold">KSh {course.price?.toLocaleString?.() ?? course.price}</div>
+                              <div className="text-text-muted text-sm">{course.duration}</div>
+                            </div>
+                            <Link
+                              to={`/courses/${course.id}`}
+                              className="w-full bg-primary/20 hover:bg-primary/30 text-primary py-2 rounded-lg font-medium transition-colors flex items-center justify-center"
+                            >
+                              View Details
+                            </Link>
                           </div>
-                          <h3 className="text-lg font-semibold mb-2">{course.title}</h3>
-                          <p className="text-text-muted text-sm mb-4 line-clamp-2">{course.description}</p>
-                          
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="text-primary font-semibold">KSh {course.price.toLocaleString()}</div>
-                            <div className="text-text-muted text-sm">{course.duration}</div>
-                          </div>
-                          
-                          <Link
-                            to={`/courses/${course.slug}`}
-                            className="w-full bg-primary/20 hover:bg-primary/30 text-primary py-2 rounded-lg font-medium transition-colors flex items-center justify-center"
-                          >
-                            View Details
-                          </Link>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
@@ -413,13 +463,10 @@ export const Dashboard: React.FC = () => {
                   <button className="w-full bg-bg-dark hover:bg-primary/20 text-text-light py-2 px-4 rounded-lg transition-colors">
                     Edit Profile
                   </button>
-                </div>
-
-                <div className="bg-bg-dark-light p-6 rounded-lg border border-primary/20 mb-6">
-                  <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
-                  <div className="space-y-3">
+                  {/* Recent Activities */}
+                  <div className="mt-4">
                     {recentActivities.slice(0, 4).map((activity, index) => (
-                      <div key={index} className="flex items-start">
+                      <div key={index} className="flex items-start mb-2">
                         <div className="mr-3 mt-1 p-2 bg-bg-dark rounded-full">
                           <activity.icon className="h-4 w-4 text-primary" />
                         </div>
@@ -499,11 +546,7 @@ export const Dashboard: React.FC = () => {
                                 <span className="bg-primary/20 text-primary text-xs px-2 py-1 rounded mr-2">
                                   {course.category}
                                 </span>
-                                {course.badgeEarned && (
-                                  <span className="bg-yellow-400/20 text-yellow-400 text-xs px-2 py-1 rounded flex items-center">
-                                    <Award className="h-3 w-3 mr-1" /> Completed
-                                  </span>
-                                )}
+                                {/* Completed badge removed */}
                               </div>
                               <h3 className="text-xl font-semibold mb-1">{course.title}</h3>
                               <p className="text-text-muted text-sm mb-2">
@@ -535,7 +578,7 @@ export const Dashboard: React.FC = () => {
                           
                           <div className="flex flex-wrap gap-3">
                             <Link
-                              to={`/courses/${course.slug}/content`}
+                              to={`/courses/${course.id}/content`}
                               className="inline-flex items-center bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg font-medium transition-colors"
                             >
                               {course.progress === 100 ? (
@@ -551,12 +594,7 @@ export const Dashboard: React.FC = () => {
                               )}
                             </Link>
                             
-                            {course.badgeEarned && (
-                              <button className="inline-flex items-center bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-                                <Award className="h-4 w-4 mr-2" />
-                                View Certificate
-                              </button>
-                            )}
+                            {/* View Certificate button removed */}
                           </div>
                         </div>
                       </div>
@@ -633,7 +671,7 @@ export const Dashboard: React.FC = () => {
                       <div className="flex items-center justify-between">
                         <span className="text-xl font-bold text-primary">KSh {course.price.toLocaleString()}</span>
                         <Link
-                          to={`/courses/${course.slug}`}
+                          to={`/courses/${course.id}`}
                           className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg font-medium transition-colors"
                         >
                           View Course
@@ -644,23 +682,10 @@ export const Dashboard: React.FC = () => {
                 ))}
               </div>
 
-              {filteredCourses.length === 0 && (
-                <div className="text-center py-12 bg-bg-dark-light rounded-lg border border-primary/20">
-                  <Search className="h-16 w-16 text-primary mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">No courses found</h3>
-                  <p className="text-text-muted">
-                    Try a different search term or browse all courses
-                  </p>
-                </div>
-              )}
+              {/* No courses found message removed as requested */}
 
               <div className="mt-8 text-center">
-                <Link
-                  to="/courses"
-                  className="inline-flex items-center bg-bg-dark-light hover:bg-primary/20 text-text-light px-6 py-3 rounded-lg font-medium transition-colors"
-                >
-                  View All Courses <ChevronRight className="h-5 w-5 ml-2" />
-                </Link>
+                {/* View All Courses link removed as requested */}
               </div>
             </div>
           </>
@@ -674,17 +699,7 @@ export const Dashboard: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 {/* Stats Cards */}
-                <div className="bg-bg-dark-light p-6 rounded-lg border border-primary/20">
-                  <div className="flex items-center">
-                    <Award className="h-10 w-10 text-yellow-400 mr-4" />
-                    <div>
-                      <p className="text-2xl font-bold">
-                        {purchasedCourses.filter(course => course.badgeEarned).length}
-                      </p>
-                      <p className="text-text-muted text-sm">Certificates Earned</p>
-                    </div>
-                  </div>
-                </div>
+                {/* Certificates Earned stat card removed */}
                 <div className="bg-bg-dark-light p-6 rounded-lg border border-primary/20">
                   <div className="flex items-center">
                     <Medal className="h-10 w-10 text-primary mr-4" />
@@ -709,86 +724,9 @@ export const Dashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* Certificates Section */}
-              <div className="mb-8">
-                <h3 className="text-xl font-bold mb-4">Your Certificates</h3>
-                
-                {purchasedCourses.some(course => course.badgeEarned) ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {purchasedCourses
-                      .filter(course => course.badgeEarned)
-                      .map((course) => (
-                        <div key={course.id} className="bg-bg-dark-light rounded-lg overflow-hidden border border-primary/20 p-6 text-center">
-                          {course.badgeEarned && (
-                            <>
-                              <div className="mb-4">
-                                <img
-                                  src={course.badgeEarned.image}
-                                  alt={course.badgeEarned.name}
-                                  className="w-24 h-24 mx-auto"
-                                />
-                              </div>
-                              <h4 className="text-xl font-bold mb-1 text-yellow-400">
-                                {course.badgeEarned.name}
-                              </h4>
-                              <p className="text-text-muted text-sm mb-3">
-                                Earned on {new Date(course.badgeEarned.earnedDate).toLocaleDateString()}
-                              </p>
-                              <p className="text-sm mb-4">
-                                For completing <span className="font-medium">{course.title}</span>
-                              </p>
-                              <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium transition-colors w-full flex items-center justify-center">
-                                <Award className="h-4 w-4 mr-2" />
-                                View Certificate
-                              </button>
-                            </>
-                          )}
-                        </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12 bg-bg-dark-light rounded-lg border border-primary/20">
-                    <Award className="h-16 w-16 text-primary mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold mb-2">No certificates yet</h3>
-                    <p className="text-text-muted mb-4">
-                      Complete courses to earn certificates and showcase your skills
-                    </p>
-                    <button
-                      onClick={() => setActiveTab('my-courses')}
-                      className="bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg font-medium transition-colors"
-                    >
-                      Go to My Courses
-                    </button>
-                  </div>
-                )}
-              </div>
+              {/* Certificates Section removed as requested */}
 
-              {/* Progress Goals Section */}
-              <div>
-                <h3 className="text-xl font-bold mb-4">Learning Goals</h3>
-                
-                <div className="bg-bg-dark-light rounded-lg overflow-hidden border border-primary/20 p-6">
-                  <div className="mb-6">
-                    <div className="flex justify-between mb-2">
-                      <span className="font-medium">Weekly Learning Goal</span>
-                      <span className="text-primary">3 of 5 hours</span>
-                    </div>
-                    <div className="w-full bg-bg-dark rounded-full h-3">
-                      <div className="bg-primary h-3 rounded-full" style={{ width: '60%' }}></div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="flex justify-between mb-2">
-                      <span className="font-medium">Course Completion Goal</span>
-                      <span className="text-green-500">1 of 3 courses</span>
-                    </div>
-                    <div className="w-full bg-bg-dark rounded-full h-3">
-                      <div className="bg-green-500 h-3 rounded-full" style={{ width: '33%' }}></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              {/* Progress Goals Section removed as requested */}
             </div>
           </>
         )}

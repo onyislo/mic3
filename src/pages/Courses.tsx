@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, Users, Star, Search } from 'lucide-react';
 import { api } from '../services/api';
@@ -24,33 +24,6 @@ export const Courses: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   
-  // Use useMemo to prevent the defaultCourses array from being recreated on each render
-  const defaultCourses = useMemo<DisplayCourse[]>(() => [
-    {
-      id: '1',
-      title: 'React Masterclass',
-      description: 'Learn React from beginner to advanced level with real-world projects.',
-      price: 2500,
-      duration: '12 weeks',
-      students: 1200,
-      rating: 4.8,
-      instructor: 'John Doe',
-      image: '', // No default image
-      category: 'Frontend',
-    },
-    {
-      id: '2',
-      title: 'Node.js Backend Development',
-      description: 'Build scalable backend applications with Node.js, Express, and MongoDB.',
-      price: 3000,
-      duration: '10 weeks',
-      students: 850,
-      rating: 4.7,
-      instructor: 'Jane Smith',
-      image: '', // No default image
-      category: 'Backend',
-    },
-  ], []);
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -72,7 +45,7 @@ export const Courses: React.FC = () => {
             students: 0, // We don't have this data yet
             rating: 5.0, // Default rating
             instructor: course["Instructor"] || "Instructor",
-            image: course.image_url || "",  // Don't use a default here, let the onError handler handle it
+            image: course["Course Image"] || "",  // Don't use a default here, let the onError handler handle it
             category: course.category || "General"
           };
         });
@@ -82,23 +55,17 @@ export const Courses: React.FC = () => {
           course.title && course.description && course.price > 0
         );
         
-        if (activeCourses.length > 0) {
-          setCourses(activeCourses);
-        } else {
-          // Fall back to default courses if no active courses
-          setCourses(defaultCourses);
-        }
+        setCourses(activeCourses);
       } catch (error) {
         console.error('Error fetching courses:', error);
-        // Fall back to default courses if API fails
-        setCourses(defaultCourses);
+        setCourses([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchCourses();
-  }, [defaultCourses]);
+  }, []);
 
   // Extract categories from actual courses
   const categories = ['all', ...Array.from(new Set(courses.map(course => course.category)))];
