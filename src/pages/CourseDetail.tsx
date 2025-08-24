@@ -22,6 +22,7 @@ interface DisplayCourse {
   features: string[];
   requirements: string[];
   whatYoullLearn: string[];
+  previewVideo?: string;
 }
 
 export const CourseDetail: React.FC = () => {
@@ -70,7 +71,8 @@ export const CourseDetail: React.FC = () => {
                 'Master the fundamentals',
                 'Apply knowledge in real-world scenarios',
                 'Build your own projects'
-              ]
+              ],
+              previewVideo: dbCourse["Course Preview Video"] || ""
             };
             setCourse(displayCourse);
           }
@@ -153,20 +155,19 @@ export const CourseDetail: React.FC = () => {
               </div>
             </div>
 
-            {course.image ? (
-              <img
-                src={course.image}
-                alt={course.title}
+            {/* Course Preview Video */}
+            {course.previewVideo ? (
+              <video
+                src={course.previewVideo}
+                controls
                 className="w-full h-64 object-cover rounded-lg mb-8"
-                onError={(e) => {
-                  // Hide the image if it fails to load
-                  console.log("Image load error in course detail for:", course.title);
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
+                poster={course.image || undefined}
+              >
+                Sorry, your browser does not support embedded videos.
+              </video>
             ) : (
               <div className="w-full h-64 bg-bg-dark-light flex items-center justify-center rounded-lg mb-8">
-                <span className="text-text-muted">No course image available</span>
+                <span className="text-text-muted">No course preview video available</span>
               </div>
             )}
 

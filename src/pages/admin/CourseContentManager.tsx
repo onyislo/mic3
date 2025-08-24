@@ -4,7 +4,7 @@ import { Play, FileText, Upload, Edit, Trash2, X, Plus, MoveUp, MoveDown, Video 
 import { supabase } from '../../services/supabaseClient';
 import { uploadCourseContent } from '../../services/storageService';
 import { ContentSection, ContentItem, getCourseContent, saveCourseContent } from '../../services/courseContentService';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAdminAuth } from '../../contexts/AdminAuthContext';
 
 interface Course {
   id: string;
@@ -15,7 +15,7 @@ interface Course {
 export const CourseContentManager: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { admin, isAuthenticated, loading } = useAdminAuth();
   
   // Course data state
   const [course, setCourse] = useState<Course>({
@@ -26,7 +26,7 @@ export const CourseContentManager: React.FC = () => {
   
   // State for content sections
   const [sections, setSections] = useState<ContentSection[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Removed local loading state; use admin loading from useAdminAuth
   const [savingChanges, setSavingChanges] = useState(false);
   
   // State for file uploads
@@ -46,18 +46,17 @@ export const CourseContentManager: React.FC = () => {
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   
-  // Check authentication first
+  // Check authentication first (with loading state)
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!loading && !isAuthenticated) {
       navigate('/admin/login', { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, loading, navigate]);
 
   // Fetch course data and content
   useEffect(() => {
     const fetchCourseAndContent = async () => {
       if (courseId && isAuthenticated) {
-        setLoading(true);
         try {
           // Fetch course details
           const { data: courseData, error: courseError } = await supabase
@@ -84,14 +83,13 @@ export const CourseContentManager: React.FC = () => {
           setSections(contentSections);
         } catch (error) {
           console.error('Error fetching course data:', error);
-        } finally {
-          setLoading(false);
         }
       }
     };
-    
-    fetchCourseAndContent();
-  }, [courseId, isAuthenticated, navigate]);
+    if (!loading) {
+      fetchCourseAndContent();
+    }
+  }, [courseId, isAuthenticated, loading, navigate]);
   
   // Handler for adding a new section
   const handleAddSection = (e: React.FormEvent) => {
@@ -388,13 +386,13 @@ export const CourseContentManager: React.FC = () => {
     }
   };
   
-  // Show loading state
+  // Show loading state (admin auth loading only)
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-bg-dark">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-red-600 border-t-transparent border-solid rounded-full mx-auto mb-4 animate-spin"></div>
-          <p className="text-lg text-gray-600">Loading course content...</p>
+          <p className="text-lg text-gray-600">Loading admin authentication...</p>
         </div>
       </div>
     );
@@ -406,7 +404,7 @@ export const CourseContentManager: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold text-red-900">{course.title}</h2>
           <p className="text-red-600">Course Content Management</p>
-          {!user && (
+          {!admin && (
             <p className="text-yellow-600 mt-2">
               ⚠️ You appear to be logged out. Content uploads may fail. Please refresh the page or log in again.
             </p>

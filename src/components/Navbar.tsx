@@ -30,6 +30,15 @@ export const Navbar: React.FC = () => {
     <nav className="bg-bg-dark-light shadow-lg border-b border-primary/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
+          {/* Mobile menu button on the left */}
+          <div className="md:hidden flex items-center mr-2">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="text-text-muted hover:text-text-light"
+            >
+              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
               <img 
@@ -120,16 +129,6 @@ export const Navbar: React.FC = () => {
               </div>
             )}
           </div>
-
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="text-text-muted hover:text-text-light"
-            >
-              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
-          </div>
         </div>
 
         {/* Mobile Navigation - Side Menu Overlay */}
@@ -142,8 +141,8 @@ export const Navbar: React.FC = () => {
         
         {/* Side Menu Panel */}
         <div 
-          className={`fixed top-0 right-0 h-full w-3/4 max-w-xs bg-bg-dark-light z-50 md:hidden shadow-xl transform transition-transform duration-300 ease-in-out ${
-            isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+          className={`fixed top-0 left-0 h-full w-3/4 max-w-xs bg-bg-dark-light z-50 md:hidden shadow-xl transform transition-transform duration-300 ease-in-out ${
+            isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
           {/* Close button */}
