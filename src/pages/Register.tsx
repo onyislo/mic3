@@ -20,6 +20,7 @@ export const Register: React.FC = () => {
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
+
     e.preventDefault();
     setError('');
 
@@ -28,8 +29,15 @@ export const Register: React.FC = () => {
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return;
+    }
+
+    // Password must have at least one uppercase, one lowercase, one number, and one special character
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).+$/;
+    if (!passwordRegex.test(password)) {
+      setError('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.');
       return;
     }
 
@@ -37,15 +45,15 @@ export const Register: React.FC = () => {
 
     try {
       const result = await register(name, email, password);
-      // Only navigate and show verification message after successful registration
       if (result?.success) {
-        // At this point, the backend would have sent a verification email
         navigate('/login', { 
           state: { 
             verificationEmail: true,
             email: email 
           } 
         });
+      } else if (result?.message) {
+        setError(result.message);
       }
     } catch (error) {
       setError('Failed to create account. Please try again.');

@@ -133,6 +133,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const register = async (name: string, email: string, password: string) => {
     try {
+      // Check if a profile with this email already exists
+      const { data: existingProfiles, error: profileCheckError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (profileCheckError) {
+        console.error('Error checking existing profile:', profileCheckError.message);
+        throw profileCheckError;
+      }
+
+      if (existingProfiles) {
+        return {
+          success: false,
+          message: 'This email is already registered. Please log in instead.'
+        };
+      }
+
       // Sign up with Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -145,6 +164,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
       if (error) {
+        // If email already exists, return a friendly message
+        if (error.message && error.message.toLowerCase().includes('user already registered')) {
+          return {
+            success: false,
+            message: 'This email is already registered. Please log in instead.'
+          };
+        }
         throw error;
       }
 
@@ -157,7 +183,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
 
         if (profileError) {
-          console.error('Error creating user profile:', profileError);
+          console.error('Error creating user profile:', profileError.message);
         }
       }
 
@@ -166,7 +192,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         success: true, 
         message: "Please check your email to confirm your registration" 
       };
-    } catch (error) {
+    } catch (error: any) {
+      // If email already exists, return a friendly message
+      if (error?.message && error.message.toLowerCase().includes('user already registered')) {
+        return {
+          success: false,
+          message: 'This email is already registered. Please log in instead.'
+        };
+      }
       console.error('Registration error:', error);
       throw error;
     }
